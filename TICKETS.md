@@ -17,6 +17,42 @@ PDF had 186 pages and 0 embedded images. PPTX and .key were correct.
 
 ---
 
+## T0 - PROCESS root cause: why our development process did not catch this
+
+The bug shipped through gates that were "typecheck + lint + 36 green integration tests +
+pixel comparison + skill TDD". Process 7 Whys:
+
+1. Why did no test fail? The autoshrink test asserted the intermediate markdown string
+   (`<h1 style=...>` present), not the rendered artifact - it tested our imagination of
+   what markdown-it would do, not what it does.
+2. Why did the HTML integration test pass? Its fixture title ("Hello Keynote") was toy
+   content that never triggered shrink - the branch that breaks was never exercised
+   end-to-end.
+3. Why did the e2e CLI test pass? examples/demo.md's photo title ("The ocean") is short;
+   real decks have long German headlines. Fixtures were not representative and never sat
+   on both sides of the shrink threshold.
+4. Why didn't the pixel harness catch it? It would have (literal `![]` is visible) - but
+   it was a manual one-off, run BEFORE autoshrink existed and never again. It was
+   protection that existed only in memory.
+5. Why did the features interact unsafely? Shrink (raw-HTML emission) and images (markdown
+   emission) were each tested alone; no fixture combined them on one slide. Bugs live in
+   feature interactions, and we had zero interaction coverage.
+6. Why was the emitter fragile at all? Raw HTML was pushed into the markdown stream ad hoc
+   in three places with no shared structural guard, so every new emission re-rolled the
+   dice on CommonMark block rules.
+7. Why did "verification before completion" not save us? The final visual verification
+   after autoshrink was done on the compare slide - which has no image. We verified A
+   change, not THE affected journey.
+
+Root cause of the process failure: **we tested intermediates with unrepresentative
+fixtures, never re-ran the artifact-level verification after the last change, and had no
+invariant connecting deck input to rendered output.**
+
+Remedy: DEVELOPMENT-PRINCIPLES.md (P1-P10), now binding via CLAUDE.md. Enforcement work
+items are T2 (interaction regression tests), T5 (structural emitter guard + property test),
+T6 (payload invariants in CI), plus: promote the pixel harness to `npm run verify:visual`
+(P6) and add a kitchen-sink fixture deck built to all formats in the suite (P4).
+
 ## T1 - Rebuild the Schwabe deck (stale broken artifacts)
 
 `.../schwabe/2026/meeting-2026-08-31/deck-out/` was built 15:57-15:58, BEFORE the 16:02 fix.
