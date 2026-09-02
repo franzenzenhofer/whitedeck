@@ -1,8 +1,10 @@
+
 import PptxGenJSImport from 'pptxgenjs';
 import type { Deck, DeckSlide } from '../parse/deck.js';
 import { parseInline } from '../parse/inline.js';
 import type { ThemeLayout, ThemePlaceholder } from '../theme/types.js';
 import { layoutOf, placeholdersByRole, WHITE } from '../theme/white.js';
+import { fitted, picFrame } from './geometry.js';
 
 /* pptxgenjs ships UMD-style typings that NodeNext ESM cannot resolve, so the
    exact API surface whitedeck uses is typed here and the constructor cast once. */
@@ -59,7 +61,7 @@ interface ImageOptions {
   y: number;
   w: number;
   h: number;
-  sizing: { type: 'cover'; w: number; h: number };
+  sizing?: { type: 'contain'; w: number; h: number };
 }
 
 interface PptxSlide {
@@ -145,18 +147,21 @@ const addQuote = (target: PptxSlide, layout: ThemeLayout, slide: DeckSlide): voi
   }
 };
 
+/** 24px of breathing room at 96dpi, expressed in EMU. */
+
+
 const addImages = (target: PptxSlide, layout: ThemeLayout, slide: DeckSlide): void => {
   const pics = placeholdersByRole(layout, 'pic');
   slide.images.forEach((image, index) => {
     const ph = pics[index] ?? pics[0];
     if (!ph) return;
+    const rect = fitted(image, picFrame(ph, layout));
     target.addImage({
       path: image,
-      x: inch(ph.xEmu),
-      y: inch(ph.yEmu),
-      w: inch(ph.wEmu),
-      h: inch(ph.hEmu),
-      sizing: { type: 'cover', w: inch(ph.wEmu), h: inch(ph.hEmu) },
+      x: inch(rect.x),
+      y: inch(rect.y),
+      w: inch(rect.w),
+      h: inch(rect.h),
     });
   });
 };

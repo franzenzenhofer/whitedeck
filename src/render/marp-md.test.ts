@@ -21,6 +21,41 @@ describe('toMarpMarkdown', () => {
     expect(Number(h1?.[1])).toBeGreaterThanOrEqual(40);
   });
 
+  it('leaves a body that fits at full size without a scoped style', () => {
+    const md = toMarpMarkdown(parseDeck('<!-- _class: title-bullets -->\n# Short title\n- a\n- b'));
+    expect(md).not.toContain('<style scoped>');
+  });
+
+  it('shrinks a bullet body that would overflow the Keynote body box, like Keynote does', () => {
+    const long = 'https://www.example.com/a/some-rather-long-url-variant - HTTP 404 (one uppercase letter)';
+    const bullets = Array.from({ length: 9 }, (_, i) => `- ${i} ${long}`).join('\n');
+    const md = toMarpMarkdown(parseDeck(`<!-- _class: title-bullets -->\n# Short title\n${bullets}`));
+    const size = /section\.title-bullets ul \{ font-size: (\d+)pt; \}/.exec(md);
+    expect(size).not.toBeNull();
+    expect(Number(size?.[1])).toBeLessThan(48);
+    expect(Number(size?.[1])).toBeGreaterThanOrEqual(16);
+  });
+
+  it('scales the Keynote paragraph gap with the shrunk body size', () => {
+    const long = 'https://www.example.com/a/some-rather-long-url-variant - HTTP 404 (one uppercase letter)';
+    const bullets = Array.from({ length: 9 }, (_, i) => `- ${i} ${long}`).join('\n');
+    const md = toMarpMarkdown(parseDeck(`<!-- _class: title-bullets -->\n# Short title\n${bullets}`));
+    const size = Number(/ul \{ font-size: (\d+)pt; \}/.exec(md)?.[1]);
+    const gap = Number(/li \+ li \{ margin-top: (\d+)pt; \}/.exec(md)?.[1]);
+    expect(gap).toBeGreaterThan(0);
+    expect(gap).toBeLessThan(59);
+    expect(gap).toBe(Math.round((59 / 48) * size));
+  });
+
+  it('measures the visible text, not the markdown link syntax', () => {
+    const linked = Array.from(
+      { length: 6 },
+      () => '- [short](https://example.com/an/extremely/long/href/that/is/never/painted/on/the/slide/at/all)',
+    ).join('\n');
+    const md = toMarpMarkdown(parseDeck(`<!-- _class: title-bullets -->\n# Short title\n${linked}`));
+    expect(md).not.toContain('<style scoped>');
+  });
+
   it('keeps bullets as a markdown list after a shrunk HTML title (blank line ends the HTML block)', () => {
     const long = 'This headline is far too long to fit the Keynote title box at full size';
     const md = toMarpMarkdown(parseDeck(`<!-- _class: title-bullets -->\n# ${long}\n- first bullet\n- second bullet`));
@@ -64,5 +99,28 @@ describe('quote shrink-to-fit', () => {
     expect(m).not.toBeNull();
     expect(Number(m?.[1])).toBeLessThan(48);
     expect(Number(m?.[1])).toBeGreaterThanOrEqual(24);
+  });
+});
+
+describe('angle brackets in text', () => {
+  it('entity-encodes a code-span tag so Marp --html paints it instead of swallowing it', () => {
+    const md = toMarpMarkdown(parseDeck('<!-- _class: title-bullets -->\n# SEO Title\n- `<title>Monstera</title>` is the tag\n'));
+    expect(md).toContain('- &lt;title&gt;Monstera&lt;/title&gt; is the tag');
+    expect(md).not.toContain('<title>');
+  });
+
+  it('encodes angle brackets in a heading too', () => {
+    const md = toMarpMarkdown(parseDeck('<!-- _class: title-bullets -->\n# The `<h1>` rule\n- one bullet\n'));
+    expect(md).toContain('# The &lt;h1&gt; rule');
+  });
+
+  it('encodes every ampersand, whether it was written bare or as an entity', () => {
+    const md = toMarpMarkdown(parseDeck('<!-- _class: title-bullets -->\n# Ampersands\n- Tom & Jerry and &amp; and &#39;\n'));
+    expect(md).toContain("- Tom &amp; Jerry and &amp; and '");
+  });
+
+  it('leaves markdown links and emphasis untouched', () => {
+    const md = toMarpMarkdown(parseDeck('<!-- _class: title-bullets -->\n# Links\n- **bold** and [label](https://example.com/a?x=1&y=2)\n'));
+    expect(md).toContain('- **bold** and [label](https://example.com/a?x=1&amp;y=2)');
   });
 });

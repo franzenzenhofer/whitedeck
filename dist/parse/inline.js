@@ -20,7 +20,33 @@ const escapeHtml = (value) => value.replaceAll('&', '&amp;').replaceAll('<', '&l
 export const inlineToHtml = (text) => parseInline(text)
     .map((s) => (s.url !== undefined ? `<a href="${escapeHtml(s.url)}">${escapeHtml(s.text)}</a>` : escapeHtml(s.text)))
     .join('');
-/** Markdown links to plain "text (url)" for renderers without hyperlink support. */
-export const inlineToPlain = (text) => parseInline(text)
-    .map((s) => (s.url !== undefined ? `${s.text} (${s.url})` : s.text))
-    .join('');
+/**
+ * Strip the emphasis and code markers Keynote cannot render. Without this a
+ * bullet reaches the slide as literal "**IS**" or "`/de/p/123`".
+ */
+const stripEmphasis = (value) => value
+    .replaceAll(/\*\*(.+?)\*\*/g, '$1')
+    .replaceAll(/__(.+?)__/g, '$1')
+    .replaceAll(/`([^`]+)`/g, '$1');
+/**
+ * Markdown to plain text for renderers without inline formatting: links
+ * become "text (url)", emphasis and code markers are removed.
+ */
+export const inlineToPlain = (text) => stripEmphasis(parseInline(text)
+    .map((s) => {
+    if (s.url === undefined)
+        return s.text;
+    // A link whose label already IS its target must not be printed twice
+    // as "https://x (https://x)" - that is how a full-URL example reads
+    // on a Keynote slide.
+    return s.text.trim() === s.url.trim() ? s.text : `${s.text} (${s.url})`;
+})
+    .join(''));
+/**
+ * The text a renderer actually paints: link labels only (the href is never on
+ * the slide) and no emphasis markers. This is what a fit calculation must
+ * measure - `inlineToPlain` appends the URL and would over-estimate by far.
+ */
+export const inlineVisibleText = (text) => stripEmphasis(parseInline(text)
+    .map((s) => s.text)
+    .join(''));

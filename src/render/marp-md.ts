@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import type { Deck, DeckSlide } from '../parse/deck.js';
-import { inlineToHtml } from '../parse/inline.js';
+import type { Deck, DeckBullet, DeckSlide } from '../parse/deck.js';
+import { inlineToHtml, inlineVisibleText } from '../parse/inline.js';
 import { layoutOf } from '../theme/white.js';
 
 /* Keynote shrinks overflowing placeholder text; CSS cannot, so the emitted markdown
@@ -21,6 +21,56 @@ const fittedTitleSizePt = (title: string, layoutId: string): number => {
     if (lines * size * PX_PER_PT * LINE_HEIGHT_EM <= ph.hPx) return size;
   }
   return MIN_TITLE_PT;
+};
+
+/* Keynote shrinks an overflowing bullet body exactly like it shrinks a title;
+   the pptx path gets that for free via pptxgenjs `fit: "shrink"`, but CSS has no
+   autofit, so the HTML/PDF path needs the same pre-computed size or long bullet
+   lists paint over the headline. */
+const MIN_BODY_PT = 16;
+const INDENT_STEP_PX = 67;
+
+interface FittedBody {
+  readonly sizePt: number;
+  readonly gapPt: number;
+  readonly shrunk: boolean;
+}
+
+const fittedBody = (bullets: readonly DeckBullet[], layoutId: string): FittedBody | undefined => {
+  const ph = layoutOf(layoutId).placeholders.find((p) => p.role === 'body');
+  if (!ph || bullets.length === 0) return undefined;
+  const indentPx = ph.indentPt !== undefined ? Math.round((ph.indentPt * 4) / 3) : INDENT_STEP_PX;
+  const gapRatio = (ph.spaceBeforePt ?? 0) / ph.sizePt;
+  const measured = bullets.map((b) => ({
+    chars: inlineVisibleText(b.text).length,
+    wPx: Math.max(1, ph.wPx - indentPx * (b.level + 1)),
+  }));
+  const heightPx = (size: number): number => {
+    const glyphPx = size * PX_PER_PT * AVG_GLYPH_EM;
+    const linePx = size * PX_PER_PT * LINE_HEIGHT_EM;
+    const gapPx = gapRatio * size * PX_PER_PT;
+    return measured.reduce(
+      (total, m, index) =>
+        total + Math.max(1, Math.ceil((m.chars * glyphPx) / m.wPx)) * linePx + (index > 0 ? gapPx : 0),
+      0,
+    );
+  };
+  let size = ph.sizePt;
+  while (size > MIN_BODY_PT && heightPx(size) > ph.hPx) size -= 2;
+  return { sizePt: size, gapPt: Math.round(gapRatio * size), shrunk: size < ph.sizePt };
+};
+
+/* Marp scopes a `<style scoped>` block to the slide it sits on; the selector
+   repeats the layout class so it outranks the theme rule it overrides. */
+const bodyStyleTag = (slide: DeckSlide): string | undefined => {
+  const fit = fittedBody(slide.bullets, slide.layout);
+  if (!fit || !fit.shrunk) return undefined;
+  return [
+    '<style scoped>',
+    `section.${slide.layout} ul { font-size: ${fit.sizePt}pt; }`,
+    `section.${slide.layout} li + li { margin-top: ${fit.gapPt}pt; }`,
+    '</style>',
+  ].join('\n');
 };
 
 /* The Keynote quote box is one-liner geometry (87px high); a long quote must
@@ -46,11 +96,22 @@ const quoteLine = (slide: DeckSlide, quote: string): string => {
   return `<blockquote style="font-size: ${size}pt; height: auto; max-height: ${QUOTE_MAX_HPX}px"><p>${inlineToHtml(quote)}</p></blockquote>`;
 };
 
+/* Marp runs with --html, so a bare "<" in a bullet or heading becomes a raw HTML
+   tag: `<title>` in the deck source (backticks stripped at parse time) reaches
+   the renderer as markup, disappears from the slide and destroys the page break.
+   The parser has already decoded every entity, so each of these three characters
+   is literal text by now and is encoded back on the way into the markdown -
+   CommonMark paints the entity as the character. Markdown syntax (links,
+   emphasis) stays untouched. */
+const HTML_TEXT = /[<>&]/g;
+const ENTITY: Record<string, string> = { '<': '&lt;', '>': '&gt;', '&': '&amp;' };
+const asMarkdownText = (value: string): string => value.replaceAll(HTML_TEXT, (c) => ENTITY[c] ?? c);
+
 const titleLine = (slide: DeckSlide): string => {
   const title = slide.title ?? '';
   const size = fittedTitleSizePt(title, slide.layout);
   const full = layoutOf(slide.layout).placeholders.find((p) => p.role === 'title')?.sizePt ?? 0;
-  return size < full ? `<h1 style="font-size: ${size}pt">${inlineToHtml(title)}</h1>` : `# ${title}`;
+  return size < full ? `<h1 style="font-size: ${size}pt">${inlineToHtml(title)}</h1>` : `# ${asMarkdownText(title)}`;
 };
 
 const columnsHtml = (slide: DeckSlide): string => {
@@ -96,9 +157,11 @@ const slideMarkdown = (slide: DeckSlide): string => {
     if (slide.source !== undefined) lines.push('', `<footer>${inlineToHtml(slide.source)}</footer>`);
     return lines.join('\n');
   }
-  if (slide.subtitle !== undefined) lines.push(`## ${slide.subtitle}`);
+  if (slide.subtitle !== undefined) lines.push(`## ${asMarkdownText(slide.subtitle)}`);
   for (const image of slide.images) lines.push(`![](${marpImageRef(image)})`);
-  for (const bullet of slide.bullets) lines.push(`${'  '.repeat(bullet.level)}- ${bullet.text}`);
+  const bodyStyle = bodyStyleTag(slide);
+  if (bodyStyle !== undefined) lines.push('', bodyStyle, '');
+  for (const bullet of slide.bullets) lines.push(`${'  '.repeat(bullet.level)}- ${asMarkdownText(bullet.text)}`);
   if (slide.quote !== undefined) lines.push(quoteLine(slide, slide.quote), '');
   if (slide.attribution !== undefined) lines.push('', `—${slide.attribution}`);
   if (slide.source !== undefined) lines.push('', `<footer>${inlineToHtml(slide.source)}</footer>`);

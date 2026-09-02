@@ -1,6 +1,7 @@
 import PptxGenJSImport from 'pptxgenjs';
 import { parseInline } from '../parse/inline.js';
 import { layoutOf, placeholdersByRole, WHITE } from '../theme/white.js';
+import { fitted, picFrame } from './geometry.js';
 const LINK_COLOR = '0000EE';
 /** Markdown text to pptx runs: links become blue underlined hyperlinks. */
 const toRuns = (text, paraOptions) => {
@@ -77,19 +78,20 @@ const addQuote = (target, layout, slide) => {
         target.addText(`—${slide.attribution}`, textOptions(attributionPh));
     }
 };
+/** 24px of breathing room at 96dpi, expressed in EMU. */
 const addImages = (target, layout, slide) => {
     const pics = placeholdersByRole(layout, 'pic');
     slide.images.forEach((image, index) => {
         const ph = pics[index] ?? pics[0];
         if (!ph)
             return;
+        const rect = fitted(image, picFrame(ph, layout));
         target.addImage({
             path: image,
-            x: inch(ph.xEmu),
-            y: inch(ph.yEmu),
-            w: inch(ph.wEmu),
-            h: inch(ph.hEmu),
-            sizing: { type: 'cover', w: inch(ph.wEmu), h: inch(ph.hEmu) },
+            x: inch(rect.x),
+            y: inch(rect.y),
+            w: inch(rect.w),
+            h: inch(rect.h),
         });
     });
 };
