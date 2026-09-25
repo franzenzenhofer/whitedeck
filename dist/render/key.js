@@ -129,6 +129,26 @@ export const linkUrisInPdf = async (bytes) => {
     return uris;
 };
 const URL_RE = /https?:\/\/[^\s)\]>"']+/g;
+/*
+ * Keynote normalises percent-escapes when it imports a link: escapes whose character
+ * does not need encoding come back decoded, so `%2D` arrives as `-`, `%3A` as `:` and
+ * `%27` as `'`. Measured 2026-09-25 on the 239-slide ASI Reisen Q&A deck: 53 of 236
+ * link targets came back that way, every one of them still the same URL, and 0
+ * annotations carried a character that must stay encoded. A byte-exact comparison
+ * therefore calls a healthy deck broken. Both sides are compared fully percent-decoded,
+ * and an annotation that does carry a character which must be encoded - a space, a
+ * quote, a brace - is a defect of its own.
+ */
+const MUST_ENCODE_RE = /[\s<>"{}|\\^`]/;
+/** A link target reduced to what it addresses: percent-escapes resolved, malformed ones left alone. */
+export const normalizeLinkTarget = (url) => {
+    try {
+        return decodeURIComponent(url);
+    }
+    catch {
+        return url;
+    }
+};
 /** URLs the deck's markdown shows as visible text (not link targets), e.g. a quoted question naming a site. */
 const visibleSourceUrls = (deck) => {
     const raw = JSON.stringify(deck.slides).replace(/\]\((?:[^()\s]|\([^()\s]*\))*\)/g, ']');
@@ -182,9 +202,14 @@ export const verifyKey = async (deck, keyPath) => {
        require every markdown link target as a clickable annotation. */
     const pdfPath = join(mkdtempSync(join(tmpdir(), 'whitedeck-keycheck-')), 'check.pdf');
     await runAppleScript(exportPdfScript(keyPath, pdfPath));
-    const uris = new Set(await linkUrisInPdf(readFileSync(pdfPath)));
+    const uris = await linkUrisInPdf(readFileSync(pdfPath));
+    for (const uri of uris) {
+        if (MUST_ENCODE_RE.test(uri))
+            defects.push(`link target carries a character that must be encoded: ${uri}`);
+    }
+    const addressed = new Set(uris.map(normalizeLinkTarget));
     for (const target of deckLinkTargets(deck)) {
-        if (!uris.has(target))
+        if (!addressed.has(normalizeLinkTarget(target)))
             defects.push(`link not clickable in the .key: ${target}`);
     }
     if (defects.length > 0) {

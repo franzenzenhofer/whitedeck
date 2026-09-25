@@ -9,6 +9,8 @@ export declare const exportPdfScript: (keyPath: string, pdfPath: string) => stri
 export declare const deckLinkTargets: (deck: Deck) => string[];
 /** The URI of every link annotation in a PDF. */
 export declare const linkUrisInPdf: (bytes: Uint8Array) => Promise<string[]>;
+/** A link target reduced to what it addresses: percent-escapes resolved, malformed ones left alone. */
+export declare const normalizeLinkTarget: (url: string) => string;
 /**
  * Defects on a finished .key, one message per problem. Two classes, both fatal:
  * the theme's dummy copy on a slide, and a URL printed as text that the

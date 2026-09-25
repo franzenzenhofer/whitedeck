@@ -6,10 +6,15 @@ import { describe, expect, it } from 'vitest';
 import { parseDeck } from '../parse/deck.js';
 import { THEME_DUMMY_STRINGS } from '../theme/dummy.js';
 import { PDFDocument, PDFName, PDFString } from 'pdf-lib';
-import { deckLinkTargets, exportPdfScript, importScript, keyDefects, linkUrisInPdf, readBackScript, renderKey, runAppleScript } from './key.js';
+import { normalizeLinkTarget, deckLinkTargets, exportPdfScript, importScript, keyDefects, linkUrisInPdf, readBackScript, renderKey, runAppleScript } from './key.js';
 import { renderPptx } from './pptx.js';
 
-const onMacWithKeynote = process.platform === 'darwin' && existsSync('/Applications/Keynote.app');
+/* Keynote ships from the Mac App Store as "Keynote Creator Studio.app" since 15.3
+   (bundle id com.apple.Keynote either way), so the real-Keynote tests must look for both
+   names - checking only Keynote.app silently skipped them on a Mac that has Keynote. */
+const onMacWithKeynote =
+  process.platform === 'darwin' &&
+  ['/Applications/Keynote.app', '/Applications/Keynote Creator Studio.app'].some((p) => existsSync(p));
 
 /* The two slides that broke Franz's .key on 2026-09-24: a quote slide (theme
    dummy copy painted over it) and a slide whose links came out as raw text. */
@@ -117,6 +122,27 @@ describe('link check: every markdown link must be a clickable annotation in the 
     });
     page.node.set(PDFName.of('Annots'), pdf.context.obj([pdf.context.register(link)]));
     expect(await linkUrisInPdf(await pdf.save())).toEqual(['https://web.dev/articles/vitals#:~:text=75th%20percentile']);
+  });
+
+  it('treats a Keynote-normalised link target as the same target', () => {
+    /* Real pairs from the 239-slide ASI Reisen Q&A deck, 25.09.2026: the markdown target
+       on the left, what Keynote wrote into the exported PDF on the right. */
+    const pairs: readonly (readonly [string, string])[] = [
+      ['https://developer.chrome.com/docs/crux/history-api#:~:text=40%2Dweeks', 'https://developer.chrome.com/docs/crux/history-api#:~:text=40-weeks'],
+      ['https://search.google.com/search-console/settings/crawl-stats?resource_id=sc-domain%3Aasi-reisen.de', 'https://search.google.com/search-console/settings/crawl-stats?resource_id=sc-domain:asi-reisen.de'],
+      ['https://github.com/GoogleChrome/lighthouse#:~:text=npm%20install%20%2Dg%20lighthouse', 'https://github.com/GoogleChrome/lighthouse#:~:text=npm%20install%20-g%20lighthouse'],
+    ];
+    for (const [target, written] of pairs) {
+      expect(normalizeLinkTarget(written)).toBe(normalizeLinkTarget(target));
+    }
+  });
+
+  it('keeps two genuinely different targets apart', () => {
+    expect(normalizeLinkTarget('https://example.com/a')).not.toBe(normalizeLinkTarget('https://example.com/b'));
+  });
+
+  it('leaves a malformed percent-escape alone instead of throwing', () => {
+    expect(normalizeLinkTarget('https://example.com/100%')).toBe('https://example.com/100%');
   });
 
   it('exports the saved .key to PDF through the bundle id', () => {
