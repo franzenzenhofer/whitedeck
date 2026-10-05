@@ -14,6 +14,13 @@ describe('toMarpMarkdown', () => {
     expect(md).toContain('section { background: #D6E9F8; }');
   });
 
+  it('emits the scoped background on custom-geometry layouts too (section-left)', () => {
+    const md = toMarpMarkdown(
+      parseDeck('<!-- _class: section-left -->\n<!-- _background: #F5C6CB -->\n\n# Question\n\n## A1 · red'),
+    );
+    expect(md).toContain('section { background: #F5C6CB; }');
+  });
+
   it('renders a quote attribution with a plain hyphen, never an em dash', () => {
     const md = toMarpMarkdown(parseDeck('<!-- _class: quote -->\n> "Q"\n> -- Someone, 2025'));
     expect(md).toContain('<p>- Someone, 2025</p>');
