@@ -133,17 +133,22 @@ const marpImageRef = (image) => {
 /* Custom layouts are one raw-HTML block with inline geometry; the logo of a
    Keynote-geometry slide is the same kind of block. Both are separated from
    the markdown around them by blank lines (CommonMark raw-HTML block rule). */
-const customBlock = (slide, meta) => [`<!-- _class: ${slide.layout} -->`, '', placedToHtml(placeCustomSlide(slide, meta), marpImageRef), ''];
+/* Marp scopes `<style scoped>` to its own slide, so a per-slide background needs
+   no theme change and cannot leak into the next slide. Custom-geometry slides need it too. */
+const backgroundBlock = (slide) => slide.background === undefined ? [] : ['', '<style scoped>', `section { background: ${slide.background}; }`, '</style>', ''];
+const customBlock = (slide, meta) => [
+    `<!-- _class: ${slide.layout} -->`,
+    ...backgroundBlock(slide),
+    '',
+    placedToHtml(placeCustomSlide(slide, meta), marpImageRef),
+    '',
+];
 const logoBlock = (meta) => meta.logo === undefined ? [] : ['', placedToHtml(placeLogo(meta), marpImageRef), ''];
 const slideMarkdown = (slide, meta) => {
     if (isCustomLayout(slide.layout))
         return customBlock(slide, meta).join('\n');
     const lines = [`<!-- _class: ${slide.layout} -->`, ...logoBlock(meta)];
-    /* Marp scopes `<style scoped>` to its own slide, so a per-slide background needs
-       no theme change and cannot leak into the next slide. */
-    if (slide.background !== undefined) {
-        lines.push('', '<style scoped>', `section { background: ${slide.background}; }`, '</style>', '');
-    }
+    lines.push(...backgroundBlock(slide));
     if (slide.title !== undefined) {
         const title = titleLine(slide);
         lines.push(title);
