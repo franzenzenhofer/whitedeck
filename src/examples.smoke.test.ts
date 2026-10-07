@@ -36,6 +36,8 @@ describe(`examples build with -f all on ${process.platform}`, () => {
     const expected = keyHere ? ['html', 'key', 'pdf', 'pptx'] : ['html', 'pdf', 'pptx'];
     expect(files.map((f) => f.slice(f.lastIndexOf('.') + 1)).sort()).toEqual(expected);
     for (const file of files) expect(statSync(join(outDir, file)).size).toBeGreaterThan(1000);
+    const html = readFileSync(join(outDir, files.find((f) => f.endsWith('.html')) ?? ''), 'utf8');
+    expect(html).not.toContain('![](');
     const pdf = files.find((f) => f.endsWith('.pdf')) ?? '';
     const pages = (await PDFDocument.load(readFileSync(join(outDir, pdf)))).getPageCount();
     expect(pages).toBe(parseDeck(readFileSync(input, 'utf8')).slides.length);

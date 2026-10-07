@@ -1,6 +1,5 @@
 import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { resolve, sep } from 'node:path';
 import type { Deck, DeckBullet, DeckMeta, DeckSlide } from '../parse/deck.js';
 import { inlineToHtml, inlineVisibleText } from '../parse/inline.js';
 import { isCustomLayout } from '../theme/scope.js';
@@ -130,18 +129,27 @@ const columnsHtml = (slide: DeckSlide): string => {
   return `<div class="cols">${cols}</div>`;
 };
 
+const DRIVE = /^[A-Za-z]:$/;
+
+/**
+ * An absolute file path as a root-relative URL path that CommonMark accepts: forward
+ * slashes, every segment percent-encoded (spaces, parentheses), a Windows drive kept
+ * readable (`C:\My Decks\a.png` becomes `/C:/My%20Decks/a.png`). Not a `file:` URL:
+ * markdown-it refuses that scheme and prints the image as literal text.
+ */
+export const imageUrlPath = (abs: string, separator: string): string =>
+  `/${abs.split(separator).filter((part) => part !== '').map((part) => (DRIVE.test(part) ? part : encodeURIComponent(part))).join('/')}`
+    .replaceAll('(', '%28')
+    .replaceAll(')', '%29');
+
 /* Marp copies the markdown into a temp dir, so relative image paths must be
-   resolved against the build cwd (the deck's directory) - and CommonMark cannot
-   parse a destination containing spaces or parentheses, so the absolute path is
-   percent-encoded. A missing image file fails the build loudly instead of
-   shipping a blank slide. */
+   resolved against the build cwd (the deck's directory). A missing image file
+   fails the build loudly instead of shipping a blank slide. */
 const marpImageRef = (image: string): string => {
   if (/^(https?:|data:)/i.test(image)) return image;
   const abs = resolve(image);
   if (!existsSync(abs)) throw new Error(`image not found: ${image} (resolved to ${abs})`);
-  /* A file URL, not a bare path: on Windows the absolute path is `C:\x\y.png`, which is
-     no URL at all. pathToFileURL percent-encodes spaces; parentheses it leaves alone. */
-  return pathToFileURL(abs).href.replaceAll('(', '%28').replaceAll(')', '%29');
+  return imageUrlPath(abs, sep);
 };
 
 /* Custom layouts are one raw-HTML block with inline geometry; the logo of a

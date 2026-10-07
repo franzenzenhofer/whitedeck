@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parseDeck } from '../parse/deck.js';
-import { toMarpMarkdown } from './marp-md.js';
+import { imageUrlPath, toMarpMarkdown } from './marp-md.js';
 
 describe('toMarpMarkdown', () => {
   it('emits a scoped background style for a slide that declares one', () => {
@@ -85,14 +85,19 @@ describe('toMarpMarkdown', () => {
 });
 
 describe('image references for Marp', () => {
-  it('emits local images as percent-encoded file URLs so spaces survive CommonMark', () => {
+  it('emits local images as percent-encoded absolute paths so spaces survive CommonMark', () => {
     const dir = mkdtempSync(join(tmpdir(), 'whitedeck img test '));
     const img = join(dir, 'chart one.png');
     writeFileSync(img, 'png');
     const md = toMarpMarkdown(parseDeck(`<!-- _class: photo-vertical -->\n# A headline for the photo slide test\n![](${img})`));
     expect(md).not.toContain('chart one.png');
     expect(md).toContain(encodeURIComponent('chart one.png'));
-    expect(md).toMatch(/!\[\]\(file:\/\/\/[^ )]+\)/);
+    expect(md).toMatch(/!\[\]\(\/[^ )]+\)/);
+  });
+
+  it('turns a Windows path into a URL path with the drive kept and backslashes gone', () => {
+    expect(imageUrlPath('C:\\Users\\Ann Lee\\My Decks (v2)\\chart.png', '\\')).toBe('/C:/Users/Ann%20Lee/My%20Decks%20%28v2%29/chart.png');
+    expect(imageUrlPath('/home/ann/my decks/chart.png', '/')).toBe('/home/ann/my%20decks/chart.png');
   });
 
   it('fails the build loudly when a referenced image does not exist', () => {
