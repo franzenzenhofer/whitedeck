@@ -1,7 +1,15 @@
 # whitedeck
 
-**Keynote-quality white slides from markdown.** One markdown file in - HTML, PDF, editable PPTX
-and native Keynote `.key` out, all pixel-identical to Apple Keynote's standard White theme.
+[![CI](https://github.com/franzenzenhofer/whitedeck/actions/workflows/ci.yml/badge.svg)](https://github.com/franzenzenhofer/whitedeck/actions/workflows/ci.yml)
+![macOS | Linux | Windows](https://img.shields.io/badge/runs_on-macOS_%7C_Linux_%7C_Windows-1d1d1f)
+![Node >= 20](https://img.shields.io/badge/node-%3E%3D20-1d1d1f)
+[![License: MIT](https://img.shields.io/badge/license-MIT-1d1d1f)](LICENSE)
+
+**The content is the design.** whitedeck turns markdown into slides in Apple Keynote's plain
+White theme: HTML, PDF, editable PPTX and native `.key`, with Apple's own layout geometry.
+Built for Claude Code and other AI agents, so their decks stop looking like AI decks.
+
+![Eight slides rendered by whitedeck](docs/images/contact-sheet.png)
 
 ```bash
 npm install -g https://github.com/franzenzenhofer/whitedeck/archive/refs/heads/main.tar.gz
@@ -11,11 +19,33 @@ whitedeck build my-deck.md -f all
 
 ## Why
 
-AI agents (and humans) constantly need clean, professional slides. Every generator produces
-"AI-looking" decks. whitedeck instead replicates the most battle-tested minimal design there is -
-Apple Keynote's White theme - with **provably exact geometry**: every placeholder position, size,
-font and point size is extracted from Apple's own Keynote export into a single source of truth
+Ask an AI agent for slides and it decorates: gradients, glow, emoji for icons, a card around
+every bullet, a headline that names a topic instead of making a point. It looks busy and says
+little.
+
+whitedeck takes all of that off the table. White canvas, one typeface, one claim per headline,
+the evidence on the slide and its source underneath. There is nothing to fiddle with, so the only
+thing left to improve is the argument. Pretty slides are a sign of the wrong priorities.
+
+![The same content as a typical over-designed AI slide and as a whitedeck slide](docs/images/ai-vs-whitedeck.png)
+
+Same four facts on both slides. One wants to be admired, the other gets read.
+
+Under the plain look sits **provably exact geometry**: every placeholder position, size, font and
+point size is extracted from Apple's own Keynote export into one source of truth
 (`src/theme/white.json`) and asserted by integration tests in every output format.
+
+## Gallery
+
+Every image below is a page of [`docs/showcase/showcase.md`](docs/showcase/showcase.md), rendered by
+`whitedeck build showcase.md -f pdf`.
+
+| | |
+|---|---|
+| ![title](docs/images/slide-1.png) `title` | ![title-bullets](docs/images/slide-2.png) `title-bullets` |
+| ![compare](docs/images/slide-3.png) `compare` | ![photo-horizontal](docs/images/slide-4.png) `photo-horizontal` |
+| ![title-center](docs/images/slide-5.png) `title-center` | ![title-bullets-photo](docs/images/slide-6.png) `title-bullets-photo` |
+| ![bullets](docs/images/slide-7.png) `bullets` | ![quote](docs/images/slide-8.png) `quote` |
 
 ## Output formats
 
