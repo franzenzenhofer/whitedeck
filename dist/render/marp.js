@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { promisify } from 'node:util';
 import { themeCss } from './css.js';
+import { marpEnv } from './marp-env.js';
 import { toMarpMarkdown } from './marp-md.js';
 const execFileAsync = promisify(execFile);
 const require = createRequire(import.meta.url);
@@ -31,7 +32,7 @@ export const runMarp = async (deck, outPath, extraArgs) => {
             '-o',
             resolve(outPath),
             ...extraArgs,
-        ]);
+        ], { env: marpEnv(process.platform, process.env) });
     }
     finally {
         await rm(workDir, { recursive: true, force: true });

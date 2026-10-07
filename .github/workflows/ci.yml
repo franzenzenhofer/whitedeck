@@ -24,3 +24,13 @@ jobs:
       # The participant journey: every example with -f all. pptx, html and pdf on every OS,
       # key only on a Mac with Keynote (no runner has it, so key is a one-line skip here).
       - run: npm run smoke
+      # Ubuntu 23.10+ gives a downloaded Chromium no sandbox (AppArmor userns restriction).
+      # The system Chrome above has an AppArmor profile; this proves the Playwright Chromium
+      # that participants' Linux desktops get also prints PDFs.
+      - name: smoke with Playwright Chromium (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          npx -y playwright@1.63.0 install chromium
+          export CHROME_PATH="$(ls -d "$HOME"/.cache/ms-playwright/chromium-*/chrome-linux64/chrome | tail -1)"
+          echo "CHROME_PATH=$CHROME_PATH"
+          npm run smoke

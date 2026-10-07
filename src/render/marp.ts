@@ -6,6 +6,7 @@ import { dirname, join, resolve } from 'node:path';
 import { promisify } from 'node:util';
 import type { Deck } from '../parse/deck.js';
 import { themeCss } from './css.js';
+import { marpEnv } from './marp-env.js';
 import { toMarpMarkdown } from './marp-md.js';
 
 const execFileAsync = promisify(execFile);
@@ -36,7 +37,7 @@ export const runMarp = async (deck: Deck, outPath: string, extraArgs: readonly s
       '-o',
       resolve(outPath),
       ...extraArgs,
-    ]);
+    ], { env: marpEnv(process.platform, process.env) });
   } finally {
     await rm(workDir, { recursive: true, force: true });
   }
