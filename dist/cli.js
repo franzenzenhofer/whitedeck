@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 import { copyFileSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { basename, dirname, extname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
-import { OUTPUT_FORMATS, isOutputFormat, renderFormat, resolveFormats } from './formats.js';
+import { planBuild, skipLine } from './capability.js';
+import { machineFacts } from './env/facts.js';
+import { OUTPUT_FORMATS, isOutputFormat, renderFormat } from './formats.js';
 import { checkedBaseName, deckFileBase } from './name.js';
 import { parseDeck } from './parse/deck.js';
 import { dummyStringsIn } from './theme/dummy.js';
@@ -12,6 +15,8 @@ const USAGE = `Usage: whitedeck <command> [options]
 Commands:
   build <deck.md|->    Render a markdown deck ("-" reads stdin)
                        -f, --format  ${OUTPUT_FORMATS.join('|')}|all (default: html)
+                                     all = every format this machine can build; the
+                                     rest is skipped with one line each on stderr
                        -o, --out     output directory, or a file path whose extension
                                      picks the format (default: next to input)
                        -n, --name    output base name (default: slug of the deck title)
@@ -60,8 +65,8 @@ const build = async (args) => {
     try {
         const deck = parseDeck(markdown);
         const target = fileTarget(values.out, previousCwd);
-        const formats = resolveFormats(values.format ?? target?.format ?? 'html');
-        if (target !== undefined && formats.length > 1) {
+        const plan = planBuild(values.format ?? target?.format ?? 'html', await machineFacts());
+        if (target !== undefined && plan.build.length + plan.skipped.length > 1) {
             fail(`-o ${values.out} names one file, so it works with a single format only - pass a folder instead`, 2);
         }
         const outDir = target?.dir ?? resolve(previousCwd, values.out ?? dir);
@@ -72,7 +77,9 @@ const build = async (args) => {
         /* Keynote cannot save into a missing folder - it shows a modal error sheet
            and every later AppleEvent times out. Create the folder up front. */
         mkdirSync(outDir, { recursive: true });
-        for (const format of formats) {
+        for (const skipped of plan.skipped)
+            process.stderr.write(`${skipLine(skipped)}\n`);
+        for (const format of plan.build) {
             const outPath = join(outDir, `${base}.${format}`);
             await renderFormat(format, deck, outPath);
             process.stdout.write(`${outPath}\n`);
@@ -109,7 +116,7 @@ const validate = (args) => {
 };
 const init = (args) => {
     const target = resolve(args[0] ?? 'deck.md');
-    const examplesDir = new URL('../examples/', import.meta.url).pathname;
+    const examplesDir = fileURLToPath(new URL('../examples/', import.meta.url));
     writeFileSync(target, readFileSync(join(examplesDir, 'demo.md'), 'utf8'), { flag: 'wx' });
     for (const asset of readdirSync(examplesDir)) {
         if (asset.endsWith('.png'))

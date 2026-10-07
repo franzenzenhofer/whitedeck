@@ -85,14 +85,14 @@ describe('toMarpMarkdown', () => {
 });
 
 describe('image references for Marp', () => {
-  it('emits local images as percent-encoded absolute paths so spaces survive CommonMark', () => {
+  it('emits local images as percent-encoded file URLs so spaces survive CommonMark', () => {
     const dir = mkdtempSync(join(tmpdir(), 'whitedeck img test '));
     const img = join(dir, 'chart one.png');
     writeFileSync(img, 'png');
     const md = toMarpMarkdown(parseDeck(`<!-- _class: photo-vertical -->\n# A headline for the photo slide test\n![](${img})`));
     expect(md).not.toContain('chart one.png');
     expect(md).toContain(encodeURIComponent('chart one.png'));
-    expect(md).toMatch(/!\[\]\(\/[^ )]+\)/);
+    expect(md).toMatch(/!\[\]\(file:\/\/\/[^ )]+\)/);
   });
 
   it('fails the build loudly when a referenced image does not exist', () => {

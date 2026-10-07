@@ -7,14 +7,13 @@ import { parseDeck } from '../parse/deck.js';
 import { THEME_DUMMY_STRINGS } from '../theme/dummy.js';
 import { PDFDocument, PDFName, PDFString } from 'pdf-lib';
 import { normalizeLinkTarget, deckLinkTargets, exportPdfScript, importScript, keyDefects, linkUrisInPdf, readBackScript, renderKey, runAppleScript } from './key.js';
+import { findKeynoteApp } from './key-app.js';
 import { renderPptx } from './pptx.js';
 
 /* Keynote ships from the Mac App Store as "Keynote Creator Studio.app" since 15.3
    (bundle id com.apple.Keynote either way), so the real-Keynote tests must look for both
    names - checking only Keynote.app silently skipped them on a Mac that has Keynote. */
-const onMacWithKeynote =
-  process.platform === 'darwin' &&
-  ['/Applications/Keynote.app', '/Applications/Keynote Creator Studio.app'].some((p) => existsSync(p));
+const onMacWithKeynote = (await findKeynoteApp(process.platform)) !== undefined;
 
 /* The two slides that broke Franz's .key on 2026-09-24: a quote slide (theme
    dummy copy painted over it) and a slide whose links came out as raw text. */
@@ -125,7 +124,7 @@ describe('link check: every markdown link must be a clickable annotation in the 
   });
 
   it('treats a Keynote-normalised link target as the same target', () => {
-    /* Real pairs from the 239-slide client Q&A deck, 25.09.2026: the markdown target
+    /* Real pairs from a 239-slide Q&A deck, 25.09.2026: the markdown target
        on the left, what Keynote wrote into the exported PDF on the right. */
     const pairs: readonly (readonly [string, string])[] = [
       ['https://developer.chrome.com/docs/crux/history-api#:~:text=40%2Dweeks', 'https://developer.chrome.com/docs/crux/history-api#:~:text=40-weeks'],

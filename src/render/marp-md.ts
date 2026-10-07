@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import type { Deck, DeckBullet, DeckMeta, DeckSlide } from '../parse/deck.js';
 import { inlineToHtml, inlineVisibleText } from '../parse/inline.js';
 import { isCustomLayout } from '../theme/scope.js';
@@ -138,12 +139,9 @@ const marpImageRef = (image: string): string => {
   if (/^(https?:|data:)/i.test(image)) return image;
   const abs = resolve(image);
   if (!existsSync(abs)) throw new Error(`image not found: ${image} (resolved to ${abs})`);
-  return abs
-    .split('/')
-    .map((part) => encodeURIComponent(part))
-    .join('/')
-    .replaceAll('(', '%28')
-    .replaceAll(')', '%29');
+  /* A file URL, not a bare path: on Windows the absolute path is `C:\x\y.png`, which is
+     no URL at all. pathToFileURL percent-encodes spaces; parentheses it leaves alone. */
+  return pathToFileURL(abs).href.replaceAll('(', '%28').replaceAll(')', '%29');
 };
 
 /* Custom layouts are one raw-HTML block with inline geometry; the logo of a

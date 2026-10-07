@@ -26,6 +26,45 @@ font and point size is extracted from Apple's own Keynote export into a single s
 | `pptx` | [PptxGenJS](https://github.com/gitbrent/PptxGenJS), native OOXML | fully **editable**, exact EMU geometry |
 | `key`  | the pptx, imported and saved by the real Keynote.app, then reopened and checked | the verified pptx: clickable links, no theme dummy copy; the build throws on either (macOS only) |
 
+## Install and platforms
+
+whitedeck runs on macOS, Linux and Windows with Node.js 20 or newer. No Keynote and no
+PowerPoint needed for anything but `.key`.
+
+```bash
+npm install -g https://github.com/franzenzenhofer/whitedeck/archive/refs/heads/main.tar.gz
+whitedeck init my-deck.md
+whitedeck build my-deck.md -f all
+```
+
+The commands are the same in Terminal, bash, PowerShell and cmd.
+
+| format | needs | macOS | Linux | Windows |
+|--------|-------|-------|-------|---------|
+| `pptx` | nothing - PptxGenJS writes the file, no PowerPoint | yes | yes | yes |
+| `html` | nothing - Marp renders it without a browser | yes | yes | yes |
+| `pdf`  | a Chromium-family browser: Chrome, Chromium or Edge | yes | yes | yes, Edge ships with Windows |
+| `key`  | Keynote.app (found by bundle id `com.apple.Keynote`) | yes | no | no |
+
+**`-f all` builds every format this machine can build**: html + pdf + pptx (+ key on a Mac with
+Keynote). Every format it leaves out gets one line on stderr, and the exit code stays 0:
+
+```
+skipped key: Keynote is macOS-only (this machine runs Linux). Fix: use -f pptx, which opens in PowerPoint, Keynote, LibreOffice Impress and Google Slides
+```
+
+**A format you name explicitly must be buildable**: `-f key` on Linux, or `-f pdf` without a
+browser, stops before anything is written, exit 1, one line with the reason and the fix.
+
+**Which browser prints the PDF**: `CHROME_PATH` if set (a wrong path is an error, not a
+fallback), else the first one found among installed Chrome, Chromium and Edge (Windows: the
+Program Files and LocalAppData install folders; Linux: `google-chrome`, `chromium`,
+`microsoft-edge` on `PATH`, `/opt`, `/snap`; macOS: `/Applications` and `~/Applications`), else a
+browser downloaded by `npx playwright install chromium` or `npx @puppeteer/browsers install chrome`.
+No browser at all: install Chrome or Edge, or run `npx playwright install chromium`.
+
+CI builds the examples with `-f all` on ubuntu, windows and macos runners on every push.
+
 ## Writing decks
 
 Slides are separated by `---`. A comment picks one of the 12 Keynote White layouts;
@@ -129,7 +168,8 @@ no title and no input file name (stdin) is an error, not a file called `deck`.
   editorial persona (assertion headlines, max 5 bullets, one chart per slide, everything
   linked to its data source).
 - **MCP server**: `whitedeck-mcp` (stdio) exposes `whitedeck_build`, `whitedeck_layouts`,
-  `whitedeck_validate`:
+  `whitedeck_validate`. `whitedeck_build` follows the same format rules as the CLI and reports
+  `built` and `skipped` (format, reason, fix):
 
 ```bash
 claude mcp add whitedeck -- whitedeck-mcp
@@ -142,7 +182,8 @@ real Keynote.app and a real MCP stdio client:
 
 ```bash
 npm install
-npm run typecheck && npm run lint && npm run test && npm run build
+npm run gates    # typecheck, lint, test, build
+npm run smoke    # build every example with -f all on this OS
 ```
 
 ## License

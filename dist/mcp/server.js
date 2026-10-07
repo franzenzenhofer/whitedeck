@@ -3,7 +3,9 @@ import { join, resolve } from 'node:path';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
-import { OUTPUT_FORMATS, renderFormat, resolveFormats } from '../formats.js';
+import { planBuild } from '../capability.js';
+import { machineFacts } from '../env/facts.js';
+import { OUTPUT_FORMATS, renderFormat } from '../formats.js';
 import { checkedBaseName, deckFileBase } from '../name.js';
 import { parseDeck } from '../parse/deck.js';
 import { LAYOUT_IDS, layoutOf } from '../theme/white.js';
@@ -23,10 +25,10 @@ server.registerTool('whitedeck_validate', {
     return jsonResult({ ok: true, slides: deck.slides.length, layouts: deck.slides.map((s) => s.layout) });
 });
 server.registerTool('whitedeck_build', {
-    description: 'Render whitedeck markdown into presentation files that look exactly like Apple Keynote White theme. Formats: html, pdf, pptx (editable), key (native Keynote, macOS only).',
+    description: 'Render whitedeck markdown into presentation files that look exactly like Apple Keynote White theme. Formats: html (always), pptx (editable, always, no PowerPoint needed), pdf (needs Chrome, Chromium or Edge), key (macOS with Keynote only). "all" builds every format this machine can produce and lists the rest under "skipped" with reason and fix; a format named explicitly that cannot be built fails the call.',
     inputSchema: {
         markdown: z.string().describe('The deck markdown'),
-        formats: z.array(z.enum(['html', 'pdf', 'pptx', 'key', 'all'])).describe('Output formats'),
+        formats: z.array(z.enum(['html', 'pdf', 'pptx', 'key', 'all'])).min(1).describe('Output formats'),
         outDir: z.string().describe('Directory to write output files into'),
         name: z
             .string()
@@ -36,14 +38,14 @@ server.registerTool('whitedeck_build', {
 }, async ({ markdown, formats, outDir, name }) => {
     const deck = parseDeck(markdown);
     const baseName = name === undefined ? deckFileBase(deck, undefined) : checkedBaseName(name);
+    const plan = planBuild(formats.join(','), await machineFacts());
     const files = [];
-    const resolved = formats.flatMap((format) => resolveFormats(format));
-    for (const format of [...new Set(resolved)]) {
+    for (const format of plan.build) {
         const outPath = join(resolve(outDir), `${baseName}.${format}`);
         await renderFormat(format, deck, outPath);
         files.push(outPath);
     }
-    return jsonResult({ ok: true, files, formats: OUTPUT_FORMATS });
+    return jsonResult({ ok: true, files, built: plan.build, skipped: plan.skipped, formats: OUTPUT_FORMATS });
 });
 const transport = new StdioServerTransport();
 await server.connect(transport);

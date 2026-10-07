@@ -35,13 +35,29 @@ tell the whole story.
 ## Commands
 
 ```bash
-npm install -g https://github.com/franzenzenhofer/whitedeck/archive/refs/heads/main.tar.gz   # once
-whitedeck build deck.md -f pptx           # editable PowerPoint
-whitedeck build deck.md -f all -o out/    # html + pdf + pptx (+ native .key on macOS)
+npm install -g https://github.com/franzenzenhofer/whitedeck/archive/refs/heads/main.tar.gz   # once, Node >= 20
+whitedeck build deck.md -f pptx           # editable PowerPoint, works everywhere
+whitedeck build deck.md -f all -o out/    # every format this machine can build
 whitedeck build deck.md -f all --name q3  # override the derived file name
 whitedeck layouts                         # list layouts
 whitedeck validate deck.md                # JSON report, exit 1 on errors
 ```
+
+Same commands on macOS, Linux and Windows (PowerShell or cmd). What each format needs:
+
+| format | needs | macOS | Linux | Windows |
+|---|---|---|---|---|
+| `pptx` | nothing (no PowerPoint) | yes | yes | yes |
+| `html` | nothing | yes | yes | yes |
+| `pdf` | Chrome, Chromium or Edge | yes | yes | yes (Edge is preinstalled) |
+| `key` | Keynote.app | yes | no | no |
+
+- `-f all` builds what the machine can and prints one `skipped <format>: <reason>. Fix: ...`
+  line per missing format on stderr, exit 0. Linux/Windows: html + pdf + pptx.
+- A format named explicitly (`-f key`, `-f pdf`) that cannot be built fails: exit 1, one line
+  with reason and fix, nothing written. Never ask for `key` off a Mac - hand over the `.pptx`.
+- No browser found: install Chrome or Edge, or `npx playwright install chromium`, or set
+  `CHROME_PATH` to the executable.
 
 **Output file names come from the deck, not the input file.** The front-matter `title` (or the
 first headline) is slugified: `title: Q3 Revenue Review` → `q3-revenue-review.pptx|pdf|html|key`.
@@ -50,7 +66,8 @@ Never hand over a file called `deck.key`. Use `--name <base>` only when the file
 external convention (ticket id, client naming scheme); a deck without any title fails the build.
 
 MCP alternative: `claude mcp add whitedeck -- whitedeck-mcp`
-(tools: `whitedeck_build`, `whitedeck_layouts`, `whitedeck_validate`).
+(tools: `whitedeck_build`, `whitedeck_layouts`, `whitedeck_validate`). `whitedeck_build` follows
+the same rules and returns `built` and `skipped` (format, reason, fix).
 
 ## Deck markdown
 
@@ -176,6 +193,7 @@ for section dividers with one line of text.
 - Titles get Helvetica Neue Medium 112pt automatically - never restyle output files.
 - Image paths resolve relative to the markdown file.
 - `-f key` needs macOS + Keynote (runs in background, quits after). Elsewhere use pptx.
+- Paths may contain spaces and backslashes; quote them in the shell (`"C:\My Decks\deck.md"`).
 
 ## Best practice: the IS / SHOULD / WHY audit deck
 
@@ -187,9 +205,9 @@ Franz's preferred shape for any onpage audit (titles, meta descriptions, markup,
 
 # IS: Hiking Trail Page
 
-- [https://www.example.com/trail](https://www.example.com/trail)
-- <title>Coastal Trail: Etappen, Höhenmeter & weitere Infos</title>
-- <meta name="description" content="Sie möchten gerne ins Land der aufgehenden Sonne reisen ..."/>
+- [https://www.example.com/trails/coast-path](https://www.example.com/trails/coast-path)
+- <title>Coast Path: Stages, Elevation & More Info</title>
+- <meta name="description" content="Dreaming of a trip to the land of the rising sun? ..."/>
 
 ---
 
@@ -197,9 +215,9 @@ Franz's preferred shape for any onpage audit (titles, meta descriptions, markup,
 
 # SHOULD: Hiking Trail Page
 
-- [https://www.example.com/trail](https://www.example.com/trail)
-- <title>Coastal Trail: 540 km, 26 Etappen, 29.232 hm - client</title>
-- <meta name="description" content="540 km, 26 Etappen und 29.232 Höhenmeter von Fethiye nach Antalya: ..."/>
+- [https://www.example.com/trails/coast-path](https://www.example.com/trails/coast-path)
+- <title>Coast Path: 540 km, 26 Stages, 29,232 m Elevation - Example Tours</title>
+- <meta name="description" content="540 km, 26 stages and 29,232 m of elevation along the coast: ..."/>
 
 ---
 
@@ -207,10 +225,10 @@ Franz's preferred shape for any onpage audit (titles, meta descriptions, markup,
 
 # WHY: Hiking Trail Page
 
-- "Land der aufgehenden Sonne" is Japan. The page is a trail in Turkey
+- "Land of the rising sun" is Japan. The page is a trail somewhere else
 - Google: ["Make sure your descriptions are truly descriptive."](https://developers.google.com/search/docs/appearance/snippet#:~:text=Make%20sure%20your%20descriptions%20are%20truly%20descriptive.)
 - Franz V3.5: SEO Title = targeted phrase + click through trigger (**numbers**) + brand
-- All three numbers are printed on that page: "Länge: 540 km, Höhenmeter: 29.232 hm"
+- All three numbers are printed on that page: "Length: 540 km, Elevation: 29,232 m"
 ```
 
 Hard rules of this deck type:

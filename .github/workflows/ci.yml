@@ -7,16 +7,20 @@ on:
 
 jobs:
   gates:
-    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - run: npm ci
-      - run: npm run typecheck
-      - run: npm run lint
+      # dist/ is rebuilt first: the CLI and MCP tests spawn the built binaries.
       - run: npm run build
-      - run: npm run test
-        env:
-          CHROME_PATH: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
+      - run: npm run gates
+      # The participant journey: every example with -f all. pptx, html and pdf on every OS,
+      # key only on a Mac with Keynote (no runner has it, so key is a one-line skip here).
+      - run: npm run smoke

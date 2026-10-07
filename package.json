@@ -39,9 +39,10 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
     "test": "vitest run",
-    "build": "tsc -p tsconfig.build.json && chmod +x dist/cli.js dist/mcp/server.js",
+    "build": "tsc -p tsconfig.build.json && node -e \"for (const f of ['dist/cli.js', 'dist/mcp/server.js']) require('node:fs').chmodSync(f, 0o755)\"",
     "gates": "npm run typecheck && npm run lint && npm run test && npm run build",
-    "prepublishOnly": "npm run typecheck && npm run lint && npm run build"
+    "prepublishOnly": "npm run typecheck && npm run lint && npm run build",
+    "smoke": "vitest run --config vitest.smoke.config.ts"
   },
   "dependencies": {
     "@marp-team/marp-cli": "^4.2.3",

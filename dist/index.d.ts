@@ -1,7 +1,10 @@
 export { parseDeck } from './parse/deck.js';
 export type { Deck, DeckSlide, DeckBullet, DeckMeta } from './parse/deck.js';
 export { WHITE, LAYOUT_IDS, layoutOf } from './theme/white.js';
-export { OUTPUT_FORMATS, resolveFormats, renderFormat } from './formats.js';
+export { OUTPUT_FORMATS, renderFormat } from './formats.js';
+export { planBuild, unavailability, skipLine, FormatUnavailableError } from './capability.js';
+export type { BuildPlan, MachineFacts, Unavailable } from './capability.js';
+export { machineFacts, findBrowser } from './env/facts.js';
 export type { OutputFormat } from './formats.js';
 export { deckFileBase, slugify, checkedBaseName } from './name.js';
 export { themeCss } from './render/css.js';

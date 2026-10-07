@@ -4,8 +4,10 @@ import { tmpdir } from 'node:os';
 import { basename, extname, join, resolve } from 'node:path';
 import { promisify } from 'node:util';
 import { PDFArray, PDFDict, PDFDocument, PDFName, PDFString, PDFHexString } from 'pdf-lib';
+import { FormatUnavailableError, noKeynote } from '../capability.js';
 import type { Deck } from '../parse/deck.js';
 import { dummyStringsIn } from '../theme/dummy.js';
+import { findKeynoteApp } from './key-app.js';
 import { renderPptx } from './pptx.js';
 
 const execFileAsync = promisify(execFile);
@@ -150,7 +152,7 @@ const URL_RE = /https?:\/\/[^\s)\]>"']+/g;
 /*
  * Keynote normalises percent-escapes when it imports a link: escapes whose character
  * does not need encoding come back decoded, so `%2D` arrives as `-`, `%3A` as `:` and
- * `%27` as `'`. Measured 2026-09-25 on the 239-slide client Q&A deck: 53 of 236
+ * `%27` as `'`. Measured 2026-09-25 on a 239-slide Q&A deck: 53 of 236
  * link targets came back that way, every one of them still the same URL, and 0
  * annotations carried a character that must stay encoded. A byte-exact comparison
  * therefore calls a healthy deck broken. Both sides are compared fully percent-decoded,
@@ -237,9 +239,7 @@ export const verifyKey = async (deck: Deck, keyPath: string): Promise<void> => {
 };
 
 export const renderKey = async (deck: Deck, outPath: string): Promise<void> => {
-  if (process.platform !== 'darwin') {
-    throw new Error('Native .key output requires macOS with Keynote.app installed');
-  }
+  if ((await findKeynoteApp(process.platform)) === undefined) throw new FormatUnavailableError(noKeynote(process.platform));
   const wasRunning = await keynoteIsRunning();
   try {
     /* Keynote names the imported document after the file it came from, and that name

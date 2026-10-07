@@ -130,6 +130,16 @@ describe('parseDeck', () => {
   });
 });
 
+describe('line endings', () => {
+  it('parses a deck saved with Windows CRLF line endings exactly like the LF one', () => {
+    const lf = '---\ntitle: Line Endings\n---\n\n# One\n\n---\n\n<!-- _class: title-bullets -->\n\n# Two\n\n- a\n- b\n';
+    const crlf = parseDeck(lf.replace(/\n/g, '\r\n'));
+    expect(crlf).toEqual(parseDeck(lf));
+    expect(crlf.slides).toHaveLength(2);
+    expect(crlf.meta.title).toBe('Line Endings');
+  });
+});
+
 describe('HTML entities in the source', () => {
   it('decodes an escaped tag so the pptx and Keynote renderers paint real angle brackets', () => {
     const deck = parseDeck('<!-- _class: title-bullets -->\n# The &lt;title&gt; rule\n- `&lt;title&gt;Monstera&lt;/title&gt;`\n');

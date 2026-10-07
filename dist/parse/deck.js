@@ -186,8 +186,10 @@ const finalizeSlide = (slide, isFirst) => {
         ...(slide.footer !== undefined && { footer: slide.footer }),
     };
 };
+/* A deck saved on Windows ends its lines in CRLF; `^---$` would never match `---\r`
+   and the whole deck would collapse into one slide. Normalise before anything parses it. */
 export const parseDeck = (markdown) => {
-    const { data, content } = matter(markdown);
+    const { data, content } = matter(markdown.replace(/\r\n?/g, '\n'));
     const blocks = content.split(/^---$/m);
     const slides = blocks.map((block, index) => {
         const slide = { bullets: [], images: [], quoteLines: [] };

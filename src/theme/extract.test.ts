@@ -1,8 +1,9 @@
 import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { extractTheme } from './extract.js';
 
-const REFERENCE_PPTX = new URL('../../../Untitled.pptx', import.meta.url).pathname;
+const REFERENCE_PPTX = fileURLToPath(new URL('../../../Untitled.pptx', import.meta.url));
 
 describe.skipIf(!existsSync(REFERENCE_PPTX))('extractTheme (requires local Keynote reference export)', () => {
   it('extracts canvas, fonts and all 12 content layouts with exact Keynote geometry', async () => {

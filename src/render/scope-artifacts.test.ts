@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import JSZip from 'jszip';
@@ -6,6 +6,7 @@ import { PDFArray, PDFDict, PDFDocument, PDFName, PDFNumber } from 'pdf-lib';
 import { describe, expect, it } from 'vitest';
 import { parseDeck } from '../parse/deck.js';
 import { renderHtml } from './html.js';
+import { findKeynoteApp } from './key-app.js';
 import { renderKey, runAppleScript } from './key.js';
 import { renderPdf } from './pdf.js';
 import { renderPptx } from './pptx.js';
@@ -106,11 +107,11 @@ describe('scope layouts: editable pptx', () => {
   });
 });
 
-const onMacWithKeynote = process.platform === 'darwin' && existsSync('/Applications/Keynote.app');
+const onMacWithKeynote = (await findKeynoteApp(process.platform)) !== undefined;
 
 const COUNT_SCRIPT = `
 on run argv
-  tell application "Keynote"
+  tell application id "com.apple.Keynote"
     set d to open (POSIX file (item 1 of argv))
     set n to count of slides of d
     set imgs to {}

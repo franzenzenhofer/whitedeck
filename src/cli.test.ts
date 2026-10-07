@@ -1,21 +1,31 @@
 import { execFile } from 'node:child_process';
-import { existsSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { findKeynoteApp } from './render/key-app.js';
 
 const execFileAsync = promisify(execFile);
-const ROOT = new URL('..', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const CLI = join(ROOT, 'dist', 'cli.js');
 const DEMO = join(ROOT, 'examples', 'demo.md');
+/* CHROME_PATH naming a missing file makes pdf unbuildable on every OS, deterministically. */
+const NO_BROWSER = { ...process.env, CHROME_PATH: join(tmpdir(), 'no-such-browser', 'chrome') };
+const keynoteHere = (await findKeynoteApp(process.platform)) !== undefined;
+
+/* The TypeScript compiler run through node itself: `npm` is npm.cmd on Windows and
+   cannot be spawned without a shell. */
+const TSC = join(ROOT, 'node_modules', 'typescript', 'bin', 'tsc');
 
 const runCli = async (
   args: readonly string[],
   input?: string,
+  env: NodeJS.ProcessEnv = process.env,
 ): Promise<{ code: number; stdout: string; stderr: string }> =>
   new Promise((resolvePromise) => {
-    const child = execFile(process.execPath, [CLI, ...args], (error, stdout, stderr) => {
+    const child = execFile(process.execPath, [CLI, ...args], { env }, (error, stdout, stderr) => {
       resolvePromise({ code: child.exitCode ?? (error ? 1 : 0), stdout, stderr });
     });
     if (input !== undefined) child.stdin?.end(input);
@@ -23,7 +33,7 @@ const runCli = async (
 
 describe('whitedeck CLI (built artifact, end to end)', () => {
   beforeAll(async () => {
-    await execFileAsync('npm', ['run', 'build'], { cwd: ROOT });
+    await execFileAsync(process.execPath, [TSC, '-p', 'tsconfig.build.json'], { cwd: ROOT });
   }, 120_000);
 
   it('names every output after the deck title, not after the input file', async () => {
@@ -103,7 +113,7 @@ describe('whitedeck CLI (built artifact, end to end)', () => {
   it('fails validation of an unknown layout with exit 1', async () => {
     const outDir = mkdtempSync(join(tmpdir(), 'whitedeck-cli-'));
     const bad = join(outDir, 'bad.md');
-    await execFileAsync('bash', ['-c', `echo '<!-- _class: nope -->' > ${bad}`]);
+    writeFileSync(bad, '<!-- _class: nope -->\n');
     const { code, stderr } = await runCli(['validate', bad]);
     expect(code).toBe(1);
     expect(stderr).toContain('nope');
@@ -124,5 +134,35 @@ describe('whitedeck CLI (built artifact, end to end)', () => {
     const { code, stderr } = await runCli(['frobnicate']);
     expect(code).toBe(2);
     expect(stderr).toContain('Usage');
+  });
+});
+
+describe('whitedeck CLI: what this machine cannot build', () => {
+  it('fails an explicitly requested format it cannot build: exit 1, one line, nothing written', async () => {
+    const outDir = mkdtempSync(join(tmpdir(), 'whitedeck-cli-'));
+    const { code, stderr } = await runCli(['build', DEMO, '-f', 'html,pptx,pdf', '-o', outDir], undefined, NO_BROWSER);
+    expect(code).toBe(1);
+    expect(stderr.trim().split('\n')).toHaveLength(1);
+    expect(stderr).toMatch(/^cannot build pdf: CHROME_PATH points to no file: .+\. Fix: fix or unset CHROME_PATH/);
+    expect(readdirSync(outDir)).toEqual([]);
+  });
+
+  it.skipIf(keynoteHere)('fails -f key without Keynote, naming the reason and pptx as the fix', async () => {
+    const outDir = mkdtempSync(join(tmpdir(), 'whitedeck-cli-'));
+    const { code, stderr } = await runCli(['build', DEMO, '-f', 'key', '-o', outDir]);
+    expect(code).toBe(1);
+    expect(stderr).toMatch(/^cannot build key: (Keynote is macOS-only|Keynote\.app not found).*Fix: .*-f pptx/);
+  });
+
+  it.skipIf(keynoteHere)('-f all builds what it can, skips the rest with one stderr line each, exit 0', async () => {
+    const outDir = mkdtempSync(join(tmpdir(), 'whitedeck-cli-'));
+    const { code, stderr, stdout } = await runCli(['build', DEMO, '-f', 'all', '-o', outDir], undefined, NO_BROWSER);
+    expect(code).toBe(0);
+    expect(stderr.trim().split('\n')).toEqual([
+      expect.stringMatching(/^skipped pdf: CHROME_PATH points to no file/),
+      expect.stringMatching(/^skipped key: /),
+    ]);
+    expect(readdirSync(outDir).sort()).toEqual(['whitedeck-demo.html', 'whitedeck-demo.pptx']);
+    expect(stdout.trim().split('\n')).toHaveLength(2);
   });
 });

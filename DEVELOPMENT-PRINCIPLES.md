@@ -1,6 +1,6 @@
 # whitedeck Development Principles
 
-Born from the 2026-08-24 image-swallowing incident (see TICKETS.md T0): a deck-breaking bug
+Born from the 2026-08-24 image-swallowing incident (logged as T0 in the local, untracked TICKETS.md): a deck-breaking bug
 shipped through gates that were "100% integration tested, zero mocks". These principles exist
 so that CLASS of failure - not just that bug - can never happen again.
 
