@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { basename, extname, join, resolve } from 'node:path';
+import { basename, extname, join, posix } from 'node:path';
 import { promisify } from 'node:util';
 import { PDFArray, PDFDict, PDFDocument, PDFName, PDFString, PDFHexString } from 'pdf-lib';
 import { FormatUnavailableError, noKeynote } from '../capability.js';
@@ -24,6 +24,9 @@ const execFileAsync = promisify(execFile);
  * arrive as free-form text items on one DEFAULT master, theme "Custom Theme",
  * 1920x1080 kept, every text box editable.
  */
+/* AppleScript's POSIX file takes a POSIX path. The script builders are pure text and
+   tested on every OS, so they resolve with posix rules, never the host's. */
+const { resolve } = posix;
 const str = (value) => `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\t/g, '\\t')}"`;
 /* osascript gives every Apple event 60 seconds by default; importing a pptx
    with a dozen full-size screenshots takes Keynote longer than that when it
