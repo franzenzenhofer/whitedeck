@@ -1,6 +1,7 @@
 import matter from 'gray-matter';
 import { borderColor, isScopeLayout } from '../theme/scope.js';
 import { ALL_LAYOUT_IDS } from '../theme/white.js';
+import { rejectCodeFences } from './fence.js';
 
 export interface DeckBullet {
   readonly text: string;
@@ -254,7 +255,9 @@ const finalizeSlide = (slide: MutableSlide, isFirst: boolean): DeckSlide => {
 /* A deck saved on Windows ends its lines in CRLF; `^---$` would never match `---\r`
    and the whole deck would collapse into one slide. Normalise before anything parses it. */
 export const parseDeck = (markdown: string): Deck => {
-  const { data, content } = matter(markdown.replace(/\r\n?/g, '\n'));
+  const source = markdown.replace(/\r\n?/g, '\n');
+  const { data, content } = matter(source);
+  rejectCodeFences(content, source.split('\n').length - content.split('\n').length + 1);
   const blocks = content.split(/^---$/m);
 
   const slides = blocks.map((block, index) => {

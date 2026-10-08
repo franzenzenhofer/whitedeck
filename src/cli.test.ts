@@ -119,6 +119,16 @@ describe('whitedeck CLI (built artifact, end to end)', () => {
     expect(stderr).toContain('nope');
   });
 
+  it('fails validation of a fenced code block with exit 1, even with --- inside the fence', async () => {
+    const outDir = mkdtempSync(join(tmpdir(), 'whitedeck-cli-'));
+    const bad = join(outDir, 'fence.md');
+    writeFileSync(bad, '# Deck\n\n---\n\n# Code\n\n```md\n---\n<!-- _class: quote -->\n```\n');
+    const { code, stdout, stderr } = await runCli(['validate', bad]);
+    expect(code).toBe(1);
+    expect(stdout).toBe('');
+    expect(stderr).toContain('slide 2, line 7: fenced code block');
+  });
+
   it('fails validation of a deck carrying theme dummy copy with exit 1', async () => {
     const outDir = mkdtempSync(join(tmpdir(), 'whitedeck-cli-'));
     const bad = join(outDir, 'dummy.md');

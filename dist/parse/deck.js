@@ -1,6 +1,7 @@
 import matter from 'gray-matter';
 import { borderColor, isScopeLayout } from '../theme/scope.js';
 import { ALL_LAYOUT_IDS } from '../theme/white.js';
+import { rejectCodeFences } from './fence.js';
 const CLASS_DIRECTIVE = /<!--\s*_class:\s*([\w-]+)\s*-->/;
 /* A slide may override the theme background - used for context slides that must read
    as a different kind of slide (a client's own question, a section marker). Keynote
@@ -189,7 +190,9 @@ const finalizeSlide = (slide, isFirst) => {
 /* A deck saved on Windows ends its lines in CRLF; `^---$` would never match `---\r`
    and the whole deck would collapse into one slide. Normalise before anything parses it. */
 export const parseDeck = (markdown) => {
-    const { data, content } = matter(markdown.replace(/\r\n?/g, '\n'));
+    const source = markdown.replace(/\r\n?/g, '\n');
+    const { data, content } = matter(source);
+    rejectCodeFences(content, source.split('\n').length - content.split('\n').length + 1);
     const blocks = content.split(/^---$/m);
     const slides = blocks.map((block, index) => {
         const slide = { bullets: [], images: [], quoteLines: [] };

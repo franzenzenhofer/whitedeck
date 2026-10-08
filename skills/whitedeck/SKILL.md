@@ -192,6 +192,8 @@ for section dividers with one line of text.
 
 - Titles get Helvetica Neue Medium 112pt automatically - never restyle output files.
 - Image paths resolve relative to the markdown file.
+- No fenced code blocks (```` ``` ```` / `~~~`): they fail validate and build, because Keynote
+  White has no code style. Show code as a screenshot image, or as inline `code` in a bullet.
 - `-f key` needs macOS + Keynote (runs in background, quits after). Elsewhere use pptx.
 - Paths may contain spaces and backslashes; quote them in the shell (`"C:\My Decks\deck.md"`).
 
