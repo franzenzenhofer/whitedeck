@@ -1,7 +1,7 @@
 import matter from 'gray-matter';
 import { borderColor, isScopeLayout } from '../theme/scope.js';
 import { ALL_LAYOUT_IDS } from '../theme/white.js';
-import { rejectCodeFences } from './fence.js';
+import { DIRECTIVE_LINE, screenBlocks } from './blocks.js';
 
 export interface DeckBullet {
   readonly text: string;
@@ -56,11 +56,10 @@ export interface Deck {
   readonly slides: readonly DeckSlide[];
 }
 
-const CLASS_DIRECTIVE = /<!--\s*_class:\s*([\w-]+)\s*-->/;
 /* A slide may override the theme background - used for context slides that must read
    as a different kind of slide (a client's own question, a section marker). Keynote
    supports this per slide, so the renderers do too. */
-const BACKGROUND_DIRECTIVE = /<!--\s*_background:\s*(#[0-9a-fA-F]{3,8}|[a-zA-Z]+)\s*-->/;
+const BACKGROUND_VALUE = /^(?:#[0-9a-fA-F]{3,8}|[a-zA-Z]+)$/;
 const INLINE_CODE = /`([^`]*)`/g;
 
 /* A deck is markdown, not HTML: an author who writes about markup types either
@@ -134,17 +133,15 @@ const parseField = (line: string, slide: MutableSlide): boolean => {
 };
 
 const parseLine = (line: string, slide: MutableSlide): void => {
-  const classMatch = CLASS_DIRECTIVE.exec(line);
-  if (classMatch?.[1] !== undefined) {
-    slide.layout = classMatch[1];
+  const directive = DIRECTIVE_LINE.exec(line);
+  if (directive?.[1] !== undefined && directive[2] !== undefined) {
+    if (directive[1] === 'class') slide.layout = directive[2];
+    else if (BACKGROUND_VALUE.test(directive[2])) slide.background = directive[2];
+    else throw new Error(`Invalid _background "${directive[2]}": use #rgb, #rrggbb or a CSS colour name`);
     return;
   }
-  const backgroundMatch = BACKGROUND_DIRECTIVE.exec(line);
-  if (backgroundMatch?.[1] !== undefined) {
-    slide.background = backgroundMatch[1];
-    return;
-  }
-  const images = [...line.matchAll(IMAGE)].flatMap((m) =>
+  // Image syntax inside a code span is an example the author wants shown, not an image.
+  const images = [...line.replace(INLINE_CODE, '').matchAll(IMAGE)].flatMap((m) =>
     m[2] !== undefined ? [parseImage(m[1] ?? '', m[2])] : [],
   );
   if (images.length > 0) {
@@ -160,7 +157,7 @@ const parseLine = (line: string, slide: MutableSlide): void => {
     return;
   }
   if (line.startsWith('>')) {
-    const text = decodeEntities(line.replace(/^>\s?/, '')).trim();
+    const text = plainText(line.replace(/^>\s?/, ''));
     const attribution = ATTRIBUTION.exec(text);
     if (attribution?.[1] !== undefined) slide.attribution = attribution[1].trim();
     else if (text.length > 0) slide.quoteLines.push(text);
@@ -257,8 +254,8 @@ const finalizeSlide = (slide: MutableSlide, isFirst: boolean): DeckSlide => {
 export const parseDeck = (markdown: string): Deck => {
   const source = markdown.replace(/\r\n?/g, '\n');
   const { data, content } = matter(source);
-  rejectCodeFences(content, source.split('\n').length - content.split('\n').length + 1);
-  const blocks = content.split(/^---$/m);
+  const screened = screenBlocks(content, source.split('\n').length - content.split('\n').length + 1);
+  const blocks = screened.split(/^---$/m);
 
   const slides = blocks.map((block, index) => {
     const slide: MutableSlide = { bullets: [], images: [], quoteLines: [] };

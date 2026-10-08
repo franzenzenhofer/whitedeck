@@ -146,8 +146,9 @@ Source: [GSC Performance](https://search.google.com/search-console)
 Links `[text](url)` render blue and underlined in every format (real hyperlinks in PPTX).
 A final `Source: [Name](url)` line becomes a small source note at the bottom of the slide.
 Titles that would overflow their box auto-shrink, exactly like Keynote.
-Fenced code blocks (```` ``` ```` or `~~~`) fail `validate` and `build` with their slide and
-line: Keynote White has no code style. Use a screenshot image or inline `code` instead.
+Fenced code blocks (```` ``` ```` or `~~~`), `###` headings and tables fail `validate` and `build`
+with their slide and line: Keynote White has no style for them. HTML comments are hidden, and deck
+syntax shown in inline `code` (a directive, an image) stays text on the slide.
 
 List all layouts: `whitedeck layouts`
 

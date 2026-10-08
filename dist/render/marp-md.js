@@ -75,7 +75,7 @@ const quoteLine = (slide, quote) => {
         .sort((a, b) => b.sizePt - a.sizePt);
     const ph = phs[0];
     if (!ph)
-        return `> ${quote}`;
+        return `> ${asMarkdownText(quote)}`;
     const fits = (size) => {
         const glyphPx = size * PX_PER_PT * AVG_GLYPH_EM;
         const lines = Math.max(1, Math.ceil((quote.length * glyphPx) / ph.wPx));
@@ -85,7 +85,7 @@ const quoteLine = (slide, quote) => {
     while (size > MIN_QUOTE_PT && !fits(size))
         size -= 2;
     if (size === ph.sizePt)
-        return `> ${quote}`;
+        return `> ${asMarkdownText(quote)}`;
     return `<blockquote style="font-size: ${size}pt; height: auto; max-height: ${QUOTE_MAX_HPX}px"><p>${inlineToHtml(quote)}</p></blockquote>`;
 };
 /* Marp runs with --html, so a bare "<" in a bullet or heading becomes a raw HTML
@@ -94,10 +94,12 @@ const quoteLine = (slide, quote) => {
    The parser has already decoded every entity, so each of these three characters
    is literal text by now and is encoded back on the way into the markdown -
    CommonMark paints the entity as the character. Markdown syntax (links,
-   emphasis) stays untouched. */
+   emphasis) stays untouched - except image syntax: the parser only leaves a
+   "![" in text when the author wrote it in a code span as an example, so it is
+   escaped and painted as text, never fetched as an image. */
 const HTML_TEXT = /[<>&]/g;
 const ENTITY = { '<': '&lt;', '>': '&gt;', '&': '&amp;' };
-const asMarkdownText = (value) => value.replaceAll(HTML_TEXT, (c) => ENTITY[c] ?? c);
+const asMarkdownText = (value) => value.replaceAll(HTML_TEXT, (c) => ENTITY[c] ?? c).replaceAll('![', '!\\[');
 const titleLine = (slide) => {
     const title = slide.title ?? '';
     const size = fittedTitleSizePt(title, slide.layout);

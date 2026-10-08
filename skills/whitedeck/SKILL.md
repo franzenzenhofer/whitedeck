@@ -192,8 +192,10 @@ for section dividers with one line of text.
 
 - Titles get Helvetica Neue Medium 112pt automatically - never restyle output files.
 - Image paths resolve relative to the markdown file.
-- No fenced code blocks (```` ``` ```` / `~~~`): they fail validate and build, because Keynote
-  White has no code style. Show code as a screenshot image, or as inline `code` in a bullet.
+- No fenced code blocks (```` ``` ```` / `~~~`), `###` headings or tables: they fail validate and
+  build, because Keynote White has no style for them. Show code as a screenshot image or inline
+  `code`, a sub-heading as a **bold** bullet, a table as the compare layout or a screenshot.
+- `<!-- comments -->` never reach a slide. Directives must be a line of their own.
 - `-f key` needs macOS + Keynote (runs in background, quits after). Elsewhere use pptx.
 - Paths may contain spaces and backslashes; quote them in the shell (`"C:\My Decks\deck.md"`).
 

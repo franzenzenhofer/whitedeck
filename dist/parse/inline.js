@@ -1,7 +1,8 @@
 /* One tokeniser for the three inline constructs whitedeck knows:
    `**bold**`, `[label](url)` and `[text]{#rrggbb}` (a coloured run). Bold may
-   wrap a link or a colour span, so the bold body is parsed recursively. */
-const TOKEN = /\*\*(.+?)\*\*|__(.+?)__|\[([^\]]+)\]\(([^)]+)\)|\[([^\]]+)\]\{(#[0-9a-fA-F]{6})\}/g;
+   wrap a link or a colour span, so the bold body is parsed recursively. A "["
+   right after "!" is image syntax the author showed in a code span - text, not a link. */
+const TOKEN = /\*\*(.+?)\*\*|__(.+?)__|(?<!!)\[([^\]]+)\]\(([^)]+)\)|\[([^\]]+)\]\{(#[0-9a-fA-F]{6})\}/g;
 const withBold = (segments) => segments.map((s) => ({ ...s, bold: true }));
 /** Split markdown text into plain, bold, link and coloured segments. */
 export const parseInline = (text) => {
