@@ -35,7 +35,7 @@ tell the whole story.
 ## Commands
 
 ```bash
-npm install -g https://github.com/franzenzenhofer/whitedeck/archive/refs/heads/main.tar.gz   # once, Node >= 20
+npm install -g --allow-remote=all https://github.com/franzenzenhofer/whitedeck/archive/refs/heads/main.tar.gz   # once, Node >= 20
 whitedeck build deck.md -f pptx           # editable PowerPoint, works everywhere
 whitedeck build deck.md -f all -o out/    # every format this machine can build
 whitedeck build deck.md -f all --name q3  # override the derived file name

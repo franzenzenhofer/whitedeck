@@ -12,7 +12,7 @@ Built for Claude Code and other AI agents, so their decks stop looking like AI d
 ![Eight slides rendered by whitedeck](docs/images/contact-sheet.png)
 
 ```bash
-npm install -g https://github.com/franzenzenhofer/whitedeck/archive/refs/heads/main.tar.gz
+npm install -g --allow-remote=all https://github.com/franzenzenhofer/whitedeck/archive/refs/heads/main.tar.gz
 whitedeck init my-deck.md
 whitedeck build my-deck.md -f all
 ```
@@ -62,12 +62,14 @@ whitedeck runs on macOS, Linux and Windows with Node.js 20 or newer. No Keynote 
 PowerPoint needed for anything but `.key`.
 
 ```bash
-npm install -g https://github.com/franzenzenhofer/whitedeck/archive/refs/heads/main.tar.gz
+npm install -g --allow-remote=all https://github.com/franzenzenhofer/whitedeck/archive/refs/heads/main.tar.gz
 whitedeck init my-deck.md
 whitedeck build my-deck.md -f all
 ```
 
 The commands are the same in Terminal, bash, PowerShell and cmd.
+
+`--allow-remote=all` is needed from npm 12 on, which refuses remote tarball installs by default (`EALLOWREMOTE`); older npm versions ignore the flag with a warning.
 
 | format | needs | macOS | Linux | Windows |
 |--------|-------|-------|-------|---------|
