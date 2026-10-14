@@ -89,3 +89,19 @@ describe('themeCss', () => {
     expect(css).toContain('section.photo-3-up img:nth-of-type(3)');
   });
 });
+
+describe('title-bullets-photo picture frame (2026-10-14 regression)', () => {
+  // A wide screenshot on this layout ran ~55px off the right edge and under the bullets,
+  // because css.ts had its own copy of the frame logic instead of geometry.ts.
+  const rule = /section\.title-bullets-photo img:nth-of-type\(1\)\s*{([^}]*)}/.exec(css)?.[1] ?? '';
+  const num = (key: string): number => Number(new RegExp(`${key}:\\s*(-?\\d+)px`).exec(rule)?.[1]);
+
+  it('stays inside the canvas', () => {
+    expect(num('left')).toBeGreaterThanOrEqual(0);
+    expect(num('left') + num('width')).toBeLessThanOrEqual(2560);
+  });
+
+  it('starts right of the bullet column', () => {
+    expect(num('left')).toBeGreaterThanOrEqual(177 + 1073);
+  });
+});
