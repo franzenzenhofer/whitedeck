@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { cpSync, mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, extname, join, posix } from 'node:path';
 import { promisify } from 'node:util';
@@ -241,11 +241,17 @@ export const renderKey = async (deck, outPath) => {
         /* Keynote names the imported document after the file it came from, and that name
            shows in its window and in error sheets - so the bridge file carries the deck's
            own name, not a generic "deck.pptx". */
+        /* Keynote only ever sees files in a fresh temp folder: it refuses to import a pptx
+           from a hidden path such as .claude/worktrees when driven by script (seen 2026-11-11).
+           The verified .key is copied to outPath at the end. */
         const stem = basename(outPath, extname(outPath));
-        const pptxPath = join(mkdtempSync(join(tmpdir(), 'whitedeck-key-')), `${stem}.pptx`);
+        const work = mkdtempSync(join(tmpdir(), 'whitedeck-key-'));
+        const pptxPath = join(work, `${stem}.pptx`);
+        const keyPath = join(work, `${stem}.key`);
         await renderPptx(deck, pptxPath);
-        await runAppleScript(importScript(pptxPath, outPath));
-        await verifyKey(deck, outPath);
+        await runAppleScript(importScript(pptxPath, keyPath));
+        await verifyKey(deck, keyPath);
+        cpSync(keyPath, outPath, { recursive: true, force: true });
     }
     finally {
         if (!wasRunning)

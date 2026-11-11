@@ -190,7 +190,7 @@ A slide with any of `Tags:` / `Logos:` / `Context:` / `Conclusion:` or a table b
 | element | markdown | in .key / .pptx |
 |---|---|---|
 | headline (what is shown) | `# ...` | text box, 56pt, shrinks on one line to 40pt, then 2 lines |
-| tags (time window, YoY) | `Tags: 28 days \| YoY` | rounded shape WITH editable text, right of the headline |
+| tags (time window, YoY) | `Tags: 28 days \| YoY` | rounded shape + text (Keynote: a group, double-click edits the text), right of the headline |
 | source logos | `Logos: gsc \| search \| path/x.png "Label"` | picture + label as text box (icons) |
 | context line (optional) | `Context: ...` | small grey text box under the headline row |
 | conclusion (required) | `Conclusion: ...` | text box under the context line |

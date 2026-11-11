@@ -1,4 +1,4 @@
-import { mkdtempSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -13,7 +13,7 @@ import { openDocumentLines, renderKey, runAppleScript } from './key.js';
  * always be editable for me, should be real keynote stuff"). A 5-slide data deck is built
  * to .key by the real Keynote, reopened, and every object is read back through Keynote's
  * own dictionary: headline, context, conclusion, source and logo labels must be TEXT ITEMS,
- * tags SHAPES with text, table cells TABLE cells - never part of an image. Needs Keynote on
+ * tags a rounded shape grouped with its text item, table cells TABLE cells - never part of an image. Needs Keynote on
  * an unlocked console: runs on the build Mac, skipped where WHITEDECK_KEYNOTE=off.
  */
 const onMacWithKeynote = (await findKeynoteApp(process.platform)) !== undefined;
@@ -78,6 +78,14 @@ const objectsScript = (keyPath: string): string =>
     '      repeat with ti in text items of s',
     '        set end of out to (n as text) & (ASCII character 31) & "text" & (ASCII character 31) & (object text of ti)',
     '      end repeat',
+    '      repeat with g in groups of s',
+    '        repeat with gi in text items of g',
+    '          set end of out to (n as text) & (ASCII character 31) & "grouptext" & (ASCII character 31) & (object text of gi)',
+    '        end repeat',
+    '        repeat with gs in shapes of g',
+    '          set end of out to (n as text) & (ASCII character 31) & "groupshape" & (ASCII character 31) & ""',
+    '        end repeat',
+    '      end repeat',
     '      repeat with sh in shapes of s',
     '        set end of out to (n as text) & (ASCII character 31) & "shape" & (ASCII character 31) & (object text of sh)',
     '      end repeat',
@@ -111,8 +119,15 @@ describe.skipIf(!onMacWithKeynote)('data slides in Keynote: every text is a nati
   beforeAll(async () => {
     previousCwd = process.cwd();
     process.chdir(EXAMPLES);
-    const keyPath = join(mkdtempSync(join(tmpdir(), 'whitedeck-data-key-')), 'data.key');
-    await renderKey(deck, keyPath);
+    /* Regression (2026-11-11): the deck is built INTO a hidden .claude/worktrees path, where
+       Keynote refuses a scripted import - whitedeck must keep Keynote in its temp folder. */
+    const base = mkdtempSync(join(tmpdir(), 'whitedeck-data-key-'));
+    const hidden = join(base, '.claude', 'worktrees', 'x');
+    mkdirSync(hidden, { recursive: true });
+    await renderKey(deck, join(hidden, 'data.key'));
+    expect(existsSync(join(hidden, 'data.key'))).toBe(true);
+    const keyPath = join(base, 'data.key');
+    cpSync(join(hidden, 'data.key'), keyPath, { recursive: true });
     const dump = await runAppleScript(objectsScript(keyPath));
     objects = dump.split(RECORD).map((record) => {
       const [slide, kind, text] = record.split(FIELD);
@@ -133,9 +148,14 @@ describe.skipIf(!onMacWithKeynote)('data slides in Keynote: every text is a nati
     });
   });
 
-  it('reads every tag as a shape with editable text', () => {
+  /* Keynote imports a pptx rounded rectangle with text as a GROUP of a rounded shape and
+     a text item (read back 11 Nov 2026) - both editable, the text by a double-click. */
+  it('reads every tag as a group of a rounded shape and an editable text item', () => {
     deck.slides.forEach((slide, index) => {
-      if (slide.layout === 'data') expect(of(index + 1, 'shape')).toEqual([...(slide.tags ?? [])]);
+      if (slide.layout !== 'data') return;
+      const tags = [...(slide.tags ?? [])];
+      expect(of(index + 1, 'grouptext')).toEqual(tags);
+      expect(of(index + 1, 'groupshape')).toHaveLength(tags.length);
     });
   });
 
