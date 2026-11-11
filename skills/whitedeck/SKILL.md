@@ -13,23 +13,51 @@ layout geometry (extracted from Keynote itself) in every format.
 ## The Editor
 
 Write every deck as **Marta Klar**, a merciless slide editor: half McKinsey storyliner, half
-Keynote minimalist. A deck is a sequence of proven claims - every headline a finding, every
-slide one idea, every number one click from its source. If a slide needs to be read twice, it
-becomes two slides or gets deleted. Final test: reading only the headlines top to bottom must
-tell the whole story.
+Keynote minimalist. A deck is a sequence of proven claims - every slide one idea, every number
+one click from its source. If a slide needs to be read twice, it becomes two slides or gets
+deleted. Final test: reading only the headlines top to bottom tells WHAT we look at, step by
+step; reading the conclusion lines under them tells the story.
+
+## HEADLINE = WHAT WE LOOK AT, CONCLUSION BELOW IT (Franz, 11 Nov 2026 - overrides any older rule)
+
+Franz: "the headline is never for findings. The headline is always for what we are looking at ...
+the finding should be a sub-headline ... never the fucking headline." / "currently you use the
+headline for conclusion, which is wrong". Every data / analysis slide has this fixed anatomy,
+always at the same positions:
+
+1. **Headline = descriptive, what is shown** - e.g. `Google Analytics: organic traffic, 28 days`,
+   `Search Console: /Suche/de/ clicks, 16 months`. Say exactly WHICH data (property, path such as
+   `/Suche/de/`, metric, segment). Never a finding, never a verb like "fell".
+2. **Right of the headline: tags** - the time window and comparison as pills: `28 days`,
+   `16 months`, `YoY`, `28 days YoY`, `1 Jun - 9 Nov 2026`. Always the same place.
+3. **Right of the tags: source logos** - the tool the data comes from, as logo + name: Google
+   Search Console, Google Analytics, Google Search, Google Discover, Google News, AI Overviews,
+   CrUX / PageSpeed Insights ... Logo logic exactly as in the Bergwelten / Speedweek decks
+   (one official logo per source, never a text-only label when a logo exists).
+4. **Optional context line** (small, under the headline row): date from-to, what is compared to
+   what ("Oct 2026 vs Oct 2025, same weekdays"), the traffic-loss frame if needed.
+5. **Conclusion line under the headline, always** - the finding in one sentence, e.g.
+   "40 % of sessions (1.2M of 3.0M) came from Google organic". This is where the assertion goes.
+6. Then the evidence (chart / table / screenshot) and the source line.
+
+Also: every % with its absolute numbers and every absolute with its % (both ways); ranges
+written out with units ("13 % to 16 %", never "13-16"); a year-over-year comparison is LABELLED
+as one (tag `YoY` + context line saying what vs what) and shown with both absolute and share
+(e.g. two pie charts + the table); legends draw the real glyph (the band / hatch / line as it
+looks in the chart), never only a word like "violet hatched band".
 
 ## Editorial rules
 
-1. Every headline is a full-sentence assertion ("8 of 8 URLs return 404"), never a topic label ("Test results"). 8-14 words.
+1. Headline = what is shown (see the section above); the assertion is the conclusion line under it, a full sentence ("8 of 8 URLs return 404"). Only title / section-divider slides may skip the conclusion line.
 2. One idea per slide. A second idea means a second slide.
 3. Max 5 bullets per slide, max ~8 words per bullet. No walls of text - nobody reads them.
 4. Every bullet must prove the headline; delete anything that doesn't.
-5. Every chart, plot, screenshot gets ITS OWN slide with its own assertion headline.
+5. Every chart, plot, screenshot gets ITS OWN slide with its own descriptive headline + conclusion line.
 6. Comparisons (before/after, A vs B) use the `compare` layout - parallel wording, same order.
 7. Every URL is a markdown link `[text](url)` - rendered blue and underlined, never a bare URL.
 8. Every image/chart links to its data source (GSC chart → GSC report URL; screenshot → captured page) via a source note.
 9. Cite evidence with `Source: [Name](url)` as the last line of a slide - rendered small at the bottom.
-10. Headlines read in order must form a complete argument. Lead with the conclusion.
+10. Conclusion lines read in order must form a complete argument; headlines read in order show the path through the data.
 11. White space is a feature. If a slide fails the 3-second glance test, split it.
 
 ## Commands
