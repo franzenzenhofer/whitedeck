@@ -1,8 +1,9 @@
-import type { DeckBullet, DeckColumn, DeckImage, DeckMeta, DeckSlide } from '../parse/deck.js';
+import type { DeckColumn, DeckImage, DeckMeta, DeckSlide } from '../parse/deck.js';
 import {
   BLACK,
   CAPTION,
   COMPARE,
+  DATA_LAYOUT_ID,
   HEADER_RULE,
   LABEL_BLUE,
   LABEL_TEXT,
@@ -25,65 +26,12 @@ import {
   type PtRect,
   type PtText,
 } from '../theme/scope.js';
-import { inlineVisibleText, parseInline } from '../parse/inline.js';
+import { inlineVisibleText } from '../parse/inline.js';
 import { fittedNotesSizePt, fittedSizePt, notesHeightPt, scaledGapPt } from './fit.js';
-import { imageSize } from './geometry.js';
+import { placeDataSlide } from './data-layout.js';
+import { firstUrl, fitInto, text, type Placed, type PlacedBullets, type PlacedImage, type PlacedText } from './placed.js';
 
-/* Everything a custom layout paints, in points, in paint order. The three
-   painters (CSS/HTML, pptx, Keynote) consume this list and never compute
-   geometry themselves - one truth, three outputs. */
-export interface PlacedText {
-  readonly kind: 'text';
-  readonly box: PtText;
-  /** Inline markdown: links, **bold**, [x]{#rrggbb}. */
-  readonly text: string;
-}
-export interface PlacedBullets {
-  readonly kind: 'bullets';
-  readonly box: PtText;
-  readonly bullets: readonly DeckBullet[];
-  readonly spaceBeforePt: number;
-  readonly indentPt: number;
-  readonly bulletSizePct: number;
-}
-export interface PlacedNotes {
-  readonly kind: 'notes';
-  readonly box: PtRect;
-  readonly sizePt: number;
-  /** Paragraph gap at `sizePt` - NOTES.spaceBeforePt scaled down with the text. */
-  readonly gapPt: number;
-  readonly columns: readonly DeckColumn[];
-}
-export interface PlacedImage {
-  readonly kind: 'image';
-  readonly path: string;
-  readonly rect: PtRect;
-  readonly border?: string;
-  /** The screenshot links to the test result (caption link) or the page (scope link). */
-  readonly url?: string;
-}
-export interface PlacedRect {
-  readonly kind: 'rect';
-  readonly rect: PtRect;
-  readonly fill: string;
-}
-export type Placed = PlacedText | PlacedBullets | PlacedNotes | PlacedImage | PlacedRect;
-
-/** Contain-fit an image into a frame; a right-aligned fit keeps the right edge. */
-const fitInto = (path: string, frame: PtRect, alignRight = false): PtRect => {
-  const size = imageSize(path);
-  if (size === undefined || size.w === 0 || size.h === 0) {
-    throw new Error(`image is not a readable PNG or JPEG: ${path}`);
-  }
-  const scale = Math.min(frame.w / size.w, frame.h / size.h);
-  const w = size.w * scale;
-  const h = size.h * scale;
-  const x = alignRight ? frame.x + frame.w - w : frame.x + (frame.w - w) / 2;
-  return { x, y: frame.y + (frame.h - h) / 2, w, h };
-};
-
-const firstUrl = (text: string | undefined): string | undefined =>
-  text === undefined ? undefined : parseInline(text).find((seg) => seg.url !== undefined)?.url;
+export type { Placed, PlacedBullets, PlacedImage, PlacedNotes, PlacedPill, PlacedRect, PlacedTable, PlacedText } from './placed.js';
 
 const image = (img: DeckImage, frame: PtRect, url?: string): PlacedImage => ({
   kind: 'image',
@@ -92,8 +40,6 @@ const image = (img: DeckImage, frame: PtRect, url?: string): PlacedImage => ({
   ...(img.border !== undefined && { border: img.border }),
   ...(url !== undefined && { url }),
 });
-
-const text = (box: PtText, value: string): PlacedText => ({ kind: 'text', box, text: value });
 
 /* Headlines shrink like Keynote placeholders do; the same size then reaches
    every painter through the box. */
@@ -231,6 +177,7 @@ const leftBody = (slide: DeckSlide): Placed[] => {
 export const placeCustomSlide = (slide: DeckSlide, meta: DeckMeta): Placed[] => {
   if (!isCustomLayout(slide.layout)) throw new Error(`${slide.layout} is not a custom layout`);
   try {
+    if (slide.layout === DATA_LAYOUT_ID) return [...placeDataSlide(slide), ...logo(meta)];
     if (isScopeLayout(slide.layout)) return [...header(slide), ...scopeBody(slide), ...caption(slide), ...logo(meta)];
     return [...leftBody(slide), ...logo(meta)];
   } catch (error) {

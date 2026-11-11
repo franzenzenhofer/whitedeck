@@ -21,3 +21,5 @@ export declare const scaledGapPt: (gapPt: number, sizePt: number, basePt: number
 export declare const fittedNotesSizePt: (groups: readonly NoteGroup[], box: FitBox, gapPt: number) => number;
 /** Largest size (stepping down by 2pt) at which `text` fits the box, never below `minPt`. */
 export declare const fittedSizePt: (text: string, box: FitBox) => number;
+/** Height in pt of `text` wrapped into `widthPt` at `sizePt`. */
+export declare const textHeightPt: (text: string, sizePt: number, widthPt: number) => number;

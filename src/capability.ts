@@ -20,6 +20,8 @@ export interface MachineFacts {
   readonly browser: string | undefined;
   /** CHROME_PATH as set by the user; it wins, and pointing at nothing is an error, not a hint. */
   readonly chromePathEnv: string | undefined;
+  /** WHITEDECK_KEYNOTE=off: Keynote may be installed but must not be driven here. */
+  readonly keynoteOff?: boolean;
 }
 
 /** Why a format cannot be built here, and the one thing that fixes it. */
@@ -42,7 +44,10 @@ const BROWSER_FIX =
   'install Google Chrome or Microsoft Edge, or run "npx playwright install chromium", or set CHROME_PATH to a Chrome/Chromium/Edge executable';
 
 /** Why .key cannot be built on this OS: not macOS, or macOS without Keynote. */
-export const noKeynote = (platform: NodeJS.Platform): Unavailable => {
+export const noKeynote = ({ platform, keynoteOff }: Pick<MachineFacts, 'platform' | 'keynoteOff'>): Unavailable => {
+  if (keynoteOff === true) {
+    return { format: 'key', reason: 'Keynote is switched off on this machine (WHITEDECK_KEYNOTE=off)', fix: `unset WHITEDECK_KEYNOTE, or ${PPTX_INSTEAD}` };
+  }
   if (platform !== 'darwin') {
     const os = OS_NAMES[platform] ?? platform;
     return { format: 'key', reason: `Keynote is macOS-only (this machine runs ${os})`, fix: PPTX_INSTEAD };
@@ -62,7 +67,7 @@ export const noBrowser = (chromePathEnv: string | undefined): Unavailable =>
 
 /** Undefined when the format can be built on this machine, else why not and how to fix it. */
 export const unavailability = (format: OutputFormat, facts: MachineFacts): Unavailable | undefined => {
-  if (format === 'key') return facts.platform === 'darwin' && facts.keynoteApp !== undefined ? undefined : noKeynote(facts.platform);
+  if (format === 'key') return facts.platform === 'darwin' && facts.keynoteApp !== undefined ? undefined : noKeynote(facts);
   if (format === 'pdf') return facts.browser === undefined ? noBrowser(facts.chromePathEnv) : undefined;
   return undefined;
 };

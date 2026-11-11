@@ -8,6 +8,8 @@ export interface MachineFacts {
     readonly browser: string | undefined;
     /** CHROME_PATH as set by the user; it wins, and pointing at nothing is an error, not a hint. */
     readonly chromePathEnv: string | undefined;
+    /** WHITEDECK_KEYNOTE=off: Keynote may be installed but must not be driven here. */
+    readonly keynoteOff?: boolean;
 }
 /** Why a format cannot be built here, and the one thing that fixes it. */
 export interface Unavailable {
@@ -20,7 +22,7 @@ export interface BuildPlan {
     readonly skipped: readonly Unavailable[];
 }
 /** Why .key cannot be built on this OS: not macOS, or macOS without Keynote. */
-export declare const noKeynote: (platform: NodeJS.Platform) => Unavailable;
+export declare const noKeynote: ({ platform, keynoteOff }: Pick<MachineFacts, "platform" | "keynoteOff">) => Unavailable;
 /** Why .pdf cannot be built: CHROME_PATH points nowhere, or no browser is installed. */
 export declare const noBrowser: (chromePathEnv: string | undefined) => Unavailable;
 /** Undefined when the format can be built on this machine, else why not and how to fix it. */

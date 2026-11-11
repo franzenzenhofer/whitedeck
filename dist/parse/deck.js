@@ -2,6 +2,7 @@ import matter from 'gray-matter';
 import { borderColor, isScopeLayout } from '../theme/scope.js';
 import { ALL_LAYOUT_IDS } from '../theme/white.js';
 import { DIRECTIVE_LINE, screenBlocks } from './blocks.js';
+import { DATA_FIELD, parseLogos, parseTable, parseTags } from './data-fields.js';
 /* A slide may override the theme background - used for context slides that must read
    as a different kind of slide (a client's own question, a section marker). Keynote
    supports this per slide, so the renderers do too. */
@@ -64,6 +65,23 @@ const parseField = (line, slide) => {
         slide.footer = value;
     return true;
 };
+const parseDataField = (line, slide) => {
+    const field = DATA_FIELD.exec(line.trimStart());
+    if (field?.[1] === undefined || field[2] === undefined)
+        return false;
+    const value = plainText(field[2]);
+    if (field[1] === 'Tags')
+        slide.tags = parseTags(value);
+    else if (field[1] === 'Logos')
+        slide.logos = parseLogos(value);
+    else if (field[1] === 'Context')
+        slide.context = value;
+    else if (field[1] === 'Conclusion')
+        slide.conclusion = value;
+    else
+        slide.notes.push(value);
+    return true;
+};
 const parseLine = (line, slide) => {
     const directive = DIRECTIVE_LINE.exec(line);
     if (directive?.[1] !== undefined && directive[2] !== undefined) {
@@ -104,6 +122,12 @@ const parseLine = (line, slide) => {
     }
     if (parseField(line, slide))
         return;
+    if (parseDataField(line, slide))
+        return;
+    if (line.trimStart().startsWith('|')) {
+        slide.tableLines.push(line);
+        return;
+    }
     const bullet = BULLET.exec(line);
     if (bullet?.[1] !== undefined && bullet[2] !== undefined) {
         slide.bullets.push({ text: plainText(bullet[2]), level: Math.floor(bullet[1].length / 2) });
@@ -113,7 +137,14 @@ const parseLine = (line, slide) => {
         slide.bullets.push({ text: plainText(line), level: 0 });
     }
 };
+const usesDataFields = (slide) => slide.tags !== undefined ||
+    slide.logos !== undefined ||
+    slide.context !== undefined ||
+    slide.conclusion !== undefined ||
+    slide.tableLines.length > 0;
 const inferLayout = (slide, isFirst) => {
+    if (usesDataFields(slide))
+        return 'data';
     const hasContent = slide.title !== undefined ||
         slide.subtitle !== undefined ||
         slide.bullets.length > 0 ||
@@ -161,6 +192,31 @@ const checkScope = (layout, slide) => {
         throw new Error('scope-compare: every image needs a label="..." attribute');
     }
 };
+/* The data layout has one fixed anatomy (headline, tags, logos, context, conclusion,
+   evidence, source); anything that would break it fails at parse time. */
+const MAX_DATA_IMAGES = 3;
+const checkData = (layout, slide) => {
+    if (layout !== 'data') {
+        if (usesDataFields(slide)) {
+            throw new Error(`Tags:, Logos:, Context:, Conclusion: and tables belong to the data layout, this slide is "${layout}"`);
+        }
+        return;
+    }
+    const where = `data slide "${slide.title ?? '(no headline)'}"`;
+    if (slide.title === undefined)
+        throw new Error('data slide needs a "# headline" (what is shown)');
+    if (slide.conclusion === undefined)
+        throw new Error(`${where} needs a "Conclusion:" line (the finding, one sentence)`);
+    if (slide.subtitle !== undefined)
+        throw new Error(`${where}: no "## subtitle" - the line under the headline is "Context:" or "Conclusion:"`);
+    if (slide.quoteLines.length > 0)
+        throw new Error(`${where}: no quote on a data slide`);
+    if (slide.images.length > MAX_DATA_IMAGES)
+        throw new Error(`${where}: at most ${MAX_DATA_IMAGES} images`);
+    if (slide.bullets.length > 0 && (slide.images.length > 0 || slide.tableLines.length > 0)) {
+        throw new Error(`${where}: bullets OR images/table as evidence, not both - split the slide`);
+    }
+};
 /** Layouts whose bullets are grouped under bold headings (`- **IS**` then plain bullets). */
 const usesColumns = (layout) => layout === 'compare' || layout === 'scope-compare' || layout === 'scope-shot-notes';
 const finalizeSlide = (slide, isFirst) => {
@@ -169,6 +225,7 @@ const finalizeSlide = (slide, isFirst) => {
         throw new Error(`Unknown layout "${layout}". Valid layouts: ${ALL_LAYOUT_IDS.join(', ')}`);
     }
     checkScope(layout, slide);
+    checkData(layout, slide);
     const quote = slide.quoteLines.join(' ');
     return {
         layout,
@@ -185,6 +242,12 @@ const finalizeSlide = (slide, isFirst) => {
         ...(slide.tool !== undefined && { tool: slide.tool }),
         ...(slide.caption !== undefined && { caption: slide.caption }),
         ...(slide.footer !== undefined && { footer: slide.footer }),
+        ...(slide.tags !== undefined && { tags: slide.tags }),
+        ...(slide.logos !== undefined && { logos: slide.logos }),
+        ...(slide.context !== undefined && { context: slide.context }),
+        ...(slide.conclusion !== undefined && { conclusion: slide.conclusion }),
+        ...(slide.tableLines.length > 0 && { table: parseTable(slide.tableLines) }),
+        ...(slide.notes.length > 0 && { notes: slide.notes.join('\n') }),
     };
 };
 /* A deck saved on Windows ends its lines in CRLF; `^---$` would never match `---\r`
@@ -195,7 +258,7 @@ export const parseDeck = (markdown) => {
     const screened = screenBlocks(content, source.split('\n').length - content.split('\n').length + 1);
     const blocks = screened.split(/^---$/m);
     const slides = blocks.map((block, index) => {
-        const slide = { bullets: [], images: [], quoteLines: [] };
+        const slide = { bullets: [], images: [], quoteLines: [], notes: [], tableLines: [] };
         for (const line of block.split('\n'))
             parseLine(line, slide);
         return finalizeSlide(slide, index === 0);

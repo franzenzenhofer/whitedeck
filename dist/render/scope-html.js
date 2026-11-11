@@ -1,5 +1,6 @@
 import { inlineToHtml } from '../parse/inline.js';
 import { BORDER_PT, ptToPx } from '../theme/scope.js';
+import { pillHtml, tableHtml } from './data-html.js';
 import { NOTE_STYLE } from './scope-layout.js';
 /* Custom layouts are painted as absolutely positioned HTML with inline
    geometry, so the Marp theme needs no per-layout rules and the pixel
@@ -13,7 +14,7 @@ const textStyle = (t) => `${boxStyle(t)}font-size:${t.sizePt}pt;font-weight:${FO
     `display:flex;flex-direction:column;justify-content:${FLEX_JUSTIFY[t.vAlign]};line-height:1.15;margin:0;`;
 /* The box is a flex column (vertical alignment); one inner span keeps the
    inline runs together as a single flex item instead of one item per run. */
-const textHtml = (p) => `<div class="wd-text" style="${textStyle(p.box)}"><span>${inlineToHtml(p.text)}</span></div>`;
+const textHtml = (p) => `<div class="wd-text" style="${textStyle(p.box)}${p.singleLine === true ? 'white-space:nowrap;' : ''}"><span>${inlineToHtml(p.text)}</span></div>`;
 /* A linked screenshot is wrapped in an anchor that carries the image's own
    geometry: an inline anchor around an absolutely positioned img has no area,
    so Chromium's PDF would print no link annotation over the picture. */
@@ -51,6 +52,10 @@ const placedHtml = (p, marpSrc) => {
         return rectHtml(p.rect, p.fill);
     if (p.kind === 'bullets')
         return bulletsHtml(p);
+    if (p.kind === 'pill')
+        return pillHtml(p);
+    if (p.kind === 'table')
+        return tableHtml(p);
     return notesHtml(p);
 };
 /** One raw-HTML block for the whole paint list; `marpSrc` resolves image paths for Marp. */

@@ -141,18 +141,22 @@ const marpImageRef = (image) => {
 /* Marp scopes `<style scoped>` to its own slide, so a per-slide background needs
    no theme change and cannot leak into the next slide. Custom-geometry slides need it too. */
 const backgroundBlock = (slide) => slide.background === undefined ? [] : ['', '<style scoped>', `section { background: ${slide.background}; }`, '</style>', ''];
+/* Marp turns an HTML comment that is not a directive into the slide's presenter notes
+   (https://marpit.marp.app/usage?id=presenter-notes) - the same notes the pptx carries. */
+const notesBlock = (slide) => slide.notes === undefined ? [] : ['', `<!-- ${slide.notes.replaceAll('--', '- -')} -->`, ''];
 const customBlock = (slide, meta) => [
     `<!-- _class: ${slide.layout} -->`,
     ...backgroundBlock(slide),
     '',
     placedToHtml(placeCustomSlide(slide, meta), marpImageRef),
     '',
+    ...notesBlock(slide),
 ];
 const logoBlock = (meta) => meta.logo === undefined ? [] : ['', placedToHtml(placeLogo(meta), marpImageRef), ''];
 const slideMarkdown = (slide, meta) => {
     if (isCustomLayout(slide.layout))
         return customBlock(slide, meta).join('\n');
-    const lines = [`<!-- _class: ${slide.layout} -->`, ...logoBlock(meta)];
+    const lines = [`<!-- _class: ${slide.layout} -->`, ...logoBlock(meta), ...notesBlock(slide)];
     lines.push(...backgroundBlock(slide));
     if (slide.title !== undefined) {
         const title = titleLine(slide);

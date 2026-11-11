@@ -161,7 +161,7 @@ describe('whitedeck CLI: what this machine cannot build', () => {
     const outDir = mkdtempSync(join(tmpdir(), 'whitedeck-cli-'));
     const { code, stderr } = await runCli(['build', DEMO, '-f', 'key', '-o', outDir]);
     expect(code).toBe(1);
-    expect(stderr).toMatch(/^cannot build key: (Keynote is macOS-only|Keynote\.app not found).*Fix: .*-f pptx/);
+    expect(stderr).toMatch(/^cannot build key: (Keynote is macOS-only|Keynote\.app not found|Keynote is switched off).*Fix: .*-f pptx/);
   });
 
   it.skipIf(keynoteHere)('-f all builds what it can, skips the rest with one stderr line each, exit 0', async () => {

@@ -1,5 +1,6 @@
 import { inlineToHtml } from '../parse/inline.js';
 import { BORDER_PT, ptToPx, type PtRect, type PtText } from '../theme/scope.js';
+import { pillHtml, tableHtml } from './data-html.js';
 import { NOTE_STYLE, type Placed, type PlacedBullets, type PlacedImage, type PlacedNotes, type PlacedText } from './scope-layout.js';
 
 /* Custom layouts are painted as absolutely positioned HTML with inline
@@ -22,7 +23,7 @@ const textStyle = (t: PtText): string =>
 /* The box is a flex column (vertical alignment); one inner span keeps the
    inline runs together as a single flex item instead of one item per run. */
 const textHtml = (p: PlacedText): string =>
-  `<div class="wd-text" style="${textStyle(p.box)}"><span>${inlineToHtml(p.text)}</span></div>`;
+  `<div class="wd-text" style="${textStyle(p.box)}${p.singleLine === true ? 'white-space:nowrap;' : ''}"><span>${inlineToHtml(p.text)}</span></div>`;
 
 /* A linked screenshot is wrapped in an anchor that carries the image's own
    geometry: an inline anchor around an absolutely positioned img has no area,
@@ -77,6 +78,8 @@ const placedHtml = (p: Placed, marpSrc: (path: string) => string): string => {
   if (p.kind === 'image') return imageHtml(p, marpSrc);
   if (p.kind === 'rect') return rectHtml(p.rect, p.fill);
   if (p.kind === 'bullets') return bulletsHtml(p);
+  if (p.kind === 'pill') return pillHtml(p);
+  if (p.kind === 'table') return tableHtml(p);
   return notesHtml(p);
 };
 

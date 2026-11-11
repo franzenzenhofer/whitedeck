@@ -84,7 +84,9 @@ export const SCOPE_LAYOUT_IDS = ['scope-shot', 'scope-compare', 'scope-shot-note
 export const LEFT_LAYOUT_IDS = ['title-left', 'section-left', 'title-bullets-left'];
 export const isScopeLayout = (id) => SCOPE_LAYOUT_IDS.includes(id);
 export const isLeftLayout = (id) => LEFT_LAYOUT_IDS.includes(id);
-export const isCustomLayout = (id) => isScopeLayout(id) || isLeftLayout(id);
+/** The data slide: headline, tag pills, source logos, context, conclusion, evidence, source (theme/data.ts). */
+export const DATA_LAYOUT_ID = 'data';
+export const isCustomLayout = (id) => isScopeLayout(id) || isLeftLayout(id) || id === DATA_LAYOUT_ID;
 /** Border colour for an image attribute value: a name from BORDER_COLORS or `#rrggbb`. */
 export const borderColor = (value) => {
     const named = BORDER_COLORS[value.toLowerCase()];

@@ -3,7 +3,10 @@ const OS_NAMES = { darwin: 'macOS', linux: 'Linux', win32: 'Windows' };
 const PPTX_INSTEAD = 'use -f pptx, which opens in PowerPoint, Keynote, LibreOffice Impress and Google Slides';
 const BROWSER_FIX = 'install Google Chrome or Microsoft Edge, or run "npx playwright install chromium", or set CHROME_PATH to a Chrome/Chromium/Edge executable';
 /** Why .key cannot be built on this OS: not macOS, or macOS without Keynote. */
-export const noKeynote = (platform) => {
+export const noKeynote = ({ platform, keynoteOff }) => {
+    if (keynoteOff === true) {
+        return { format: 'key', reason: 'Keynote is switched off on this machine (WHITEDECK_KEYNOTE=off)', fix: `unset WHITEDECK_KEYNOTE, or ${PPTX_INSTEAD}` };
+    }
     if (platform !== 'darwin') {
         const os = OS_NAMES[platform] ?? platform;
         return { format: 'key', reason: `Keynote is macOS-only (this machine runs ${os})`, fix: PPTX_INSTEAD };
@@ -21,7 +24,7 @@ export const noBrowser = (chromePathEnv) => chromePathEnv === undefined
 /** Undefined when the format can be built on this machine, else why not and how to fix it. */
 export const unavailability = (format, facts) => {
     if (format === 'key')
-        return facts.platform === 'darwin' && facts.keynoteApp !== undefined ? undefined : noKeynote(facts.platform);
+        return facts.platform === 'darwin' && facts.keynoteApp !== undefined ? undefined : noKeynote(facts);
     if (format === 'pdf')
         return facts.browser === undefined ? noBrowser(facts.chromePathEnv) : undefined;
     return undefined;

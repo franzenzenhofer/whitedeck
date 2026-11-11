@@ -1,0 +1,65 @@
+[
+  {
+    "id": "ga4",
+    "file": "ga4.png",
+    "label": "Google Analytics",
+    "kind": "wordmark",
+    "aspect": 2.5459
+  },
+  {
+    "id": "gsc",
+    "file": "gsc.png",
+    "label": "Search Console",
+    "kind": "wordmark",
+    "aspect": 5.7528
+  },
+  {
+    "id": "search",
+    "file": "search.png",
+    "label": "Google Search",
+    "kind": "icon",
+    "aspect": 0.9823
+  },
+  {
+    "id": "discover",
+    "file": "discover.png",
+    "label": "Google Discover",
+    "kind": "icon",
+    "aspect": 0.999
+  },
+  {
+    "id": "news",
+    "file": "news.png",
+    "label": "Google News",
+    "kind": "icon",
+    "aspect": 1.2028
+  },
+  {
+    "id": "ai-overviews",
+    "file": "ai-overviews.png",
+    "label": "AI Overviews",
+    "kind": "icon",
+    "aspect": 0.9843
+  },
+  {
+    "id": "ai-mode",
+    "file": "ai-mode.png",
+    "label": "AI Mode",
+    "kind": "icon",
+    "aspect": 0.9538
+  },
+  {
+    "id": "ads",
+    "file": "ads.png",
+    "label": "Google Ads",
+    "kind": "icon",
+    "aspect": 1.0866
+  },
+  {
+    "id": "psi",
+    "file": "psi.png",
+    "label": "PageSpeed Insights",
+    "kind": "wordmark",
+    "aspect": 5.4468
+  }
+]

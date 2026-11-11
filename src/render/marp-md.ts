@@ -163,12 +163,18 @@ const marpImageRef = (image: string): string => {
 const backgroundBlock = (slide: DeckSlide): string[] =>
   slide.background === undefined ? [] : ['', '<style scoped>', `section { background: ${slide.background}; }`, '</style>', ''];
 
+/* Marp turns an HTML comment that is not a directive into the slide's presenter notes
+   (https://marpit.marp.app/usage?id=presenter-notes) - the same notes the pptx carries. */
+const notesBlock = (slide: DeckSlide): string[] =>
+  slide.notes === undefined ? [] : ['', `<!-- ${slide.notes.replaceAll('--', '- -')} -->`, ''];
+
 const customBlock = (slide: DeckSlide, meta: DeckMeta): string[] => [
   `<!-- _class: ${slide.layout} -->`,
   ...backgroundBlock(slide),
   '',
   placedToHtml(placeCustomSlide(slide, meta), marpImageRef),
   '',
+  ...notesBlock(slide),
 ];
 
 const logoBlock = (meta: DeckMeta): string[] =>
@@ -176,7 +182,7 @@ const logoBlock = (meta: DeckMeta): string[] =>
 
 const slideMarkdown = (slide: DeckSlide, meta: DeckMeta): string => {
   if (isCustomLayout(slide.layout)) return customBlock(slide, meta).join('\n');
-  const lines: string[] = [`<!-- _class: ${slide.layout} -->`, ...logoBlock(meta)];
+  const lines: string[] = [`<!-- _class: ${slide.layout} -->`, ...logoBlock(meta), ...notesBlock(slide)];
   lines.push(...backgroundBlock(slide));
   if (slide.title !== undefined) {
     const title = titleLine(slide);

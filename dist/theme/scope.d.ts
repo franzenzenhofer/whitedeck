@@ -99,6 +99,8 @@ export declare const SCOPE_LAYOUT_IDS: readonly ["scope-shot", "scope-compare", 
 export declare const LEFT_LAYOUT_IDS: readonly ["title-left", "section-left", "title-bullets-left"];
 export declare const isScopeLayout: (id: string) => boolean;
 export declare const isLeftLayout: (id: string) => boolean;
+/** The data slide: headline, tag pills, source logos, context, conclusion, evidence, source (theme/data.ts). */
+export declare const DATA_LAYOUT_ID = "data";
 export declare const isCustomLayout: (id: string) => boolean;
 /** Border colour for an image attribute value: a name from BORDER_COLORS or `#rrggbb`. */
 export declare const borderColor: (value: string) => string;

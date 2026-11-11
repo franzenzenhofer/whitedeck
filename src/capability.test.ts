@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { findKeynoteApp } from './render/key-app.js';
 import { FormatUnavailableError, planBuild, skipLine, unavailability, type MachineFacts } from './capability.js';
 
 /* Plain facts for each machine a workshop participant may bring. No mocks: the rules
@@ -32,6 +33,16 @@ describe('unavailability', () => {
     expect(unavailability('key', MAC_WITHOUT_KEYNOTE)?.reason).toBe('Keynote.app not found (no app with bundle id com.apple.Keynote)');
     expect(unavailability('key', LINUX)?.reason).toBe('Keynote is macOS-only (this machine runs Linux)');
     expect(unavailability('key', WINDOWS)?.reason).toBe('Keynote is macOS-only (this machine runs Windows)');
+  });
+
+  it('WHITEDECK_KEYNOTE=off makes key unavailable with its own reason, even with Keynote installed', () => {
+    const off = unavailability('key', { ...MAC_WITHOUT_KEYNOTE, keynoteOff: true });
+    expect(off?.reason).toBe('Keynote is switched off on this machine (WHITEDECK_KEYNOTE=off)');
+    expect(off?.fix).toMatch(/^unset WHITEDECK_KEYNOTE, or use -f pptx/);
+  });
+
+  it('WHITEDECK_KEYNOTE=off: Keynote is not even looked up on a Mac', async () => {
+    expect(await findKeynoteApp('darwin', { WHITEDECK_KEYNOTE: 'off' })).toBeUndefined();
   });
 
   it('a Keynote path reported on a non-Mac still does not make key buildable', () => {

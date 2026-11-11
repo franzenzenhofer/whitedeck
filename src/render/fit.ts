@@ -59,3 +59,7 @@ export const fittedSizePt = (text: string, box: FitBox): number => {
   }
   return box.minPt;
 };
+
+/** Height in pt of `text` wrapped into `widthPt` at `sizePt`. */
+export const textHeightPt = (text: string, sizePt: number, widthPt: number): number =>
+  wrappedLines(text.length, sizePt, widthPt) * sizePt * LINE_HEIGHT_EM;

@@ -1,50 +1,13 @@
-import { parseInline } from '../parse/inline.js';
 import { BORDER_PT, EMU_PER_PT } from '../theme/scope.js';
 import { NOTE_STYLE } from './scope-layout.js';
+import { paintPill, paintTable } from './data-pptx.js';
+import { boxOptions, hex, toRuns } from './pptx-runs.js';
+export { LINK_COLOR, toRuns } from './pptx-runs.js';
 const PT_PER_INCH = 72;
 const inch = (pt) => pt / PT_PER_INCH;
-export const LINK_COLOR = '0000EE';
 const BULLET_CODE = '2022';
-const FONT_FACE = {
-    regular: 'Helvetica Neue',
-    medium: 'Helvetica Neue Medium',
-    light: 'Helvetica Neue Light',
-    bold: 'Helvetica Neue Bold',
-};
-const hex = (color) => color.replace('#', '').toUpperCase();
-/**
- * Inline markdown to pptx runs: links blue + underlined, bold as a real bold
- * run, `[x]{#rrggbb}` as a coloured run. Shared with the Keynote-geometry
- * layouts through pptx.ts.
- */
-export const toRuns = (text, para) => {
-    const segments = parseInline(text);
-    return segments.map((s, index) => ({
-        text: s.text,
-        options: {
-            ...para,
-            breakLine: index === segments.length - 1 ? (para.breakLine ?? false) : false,
-            ...(s.url !== undefined && { hyperlink: { url: s.url }, color: LINK_COLOR, underline: { style: 'sng' } }),
-            ...(s.bold === true && { bold: true }),
-            ...(s.color !== undefined && { color: hex(s.color) }),
-            ...(index > 0 && { bullet: false }),
-        },
-    }));
-};
-const boxOptions = (t) => ({
-    x: inch(t.x),
-    y: inch(t.y),
-    w: inch(t.w),
-    h: inch(t.h),
-    fontSize: t.sizePt,
-    fontFace: FONT_FACE[t.font],
-    color: hex(t.color),
-    align: t.align,
-    valign: t.vAlign,
-    margin: 0,
-});
 const paintText = (slide, p) => {
-    slide.addText(toRuns(p.text, {}), boxOptions(p.box));
+    slide.addText(toRuns(p.text, {}), { ...boxOptions(p.box), ...(p.singleLine === true && { wrap: false }) });
 };
 const bulletRuns = (bullets, indentPt, spaceBeforePt) => bullets.flatMap((b, index) => toRuns(b.text, {
     bullet: { code: BULLET_CODE, indent: indentPt },
@@ -96,6 +59,10 @@ export const paintPlaced = (slide, placed) => {
             paintNotes(slide, p);
         else if (p.kind === 'image')
             paintImage(slide, p);
+        else if (p.kind === 'pill')
+            paintPill(slide, p);
+        else if (p.kind === 'table')
+            paintTable(slide, p);
         else
             paintRect(slide, p.rect, p.fill);
     }

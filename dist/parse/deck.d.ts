@@ -1,3 +1,5 @@
+import { type DeckLogo, type DeckTable } from './data-fields.js';
+export type { CellAlign, DeckLogo, DeckTable } from './data-fields.js';
 export interface DeckBullet {
     readonly text: string;
     readonly level: number;
@@ -34,6 +36,18 @@ export interface DeckSlide {
     readonly caption?: string;
     /** `Footer:` free text line at the bottom-left (title-left). */
     readonly footer?: string;
+    /** `Tags:` pills right of the headline (data layout). */
+    readonly tags?: readonly string[];
+    /** `Logos:` source logos right of the tags (data layout). */
+    readonly logos?: readonly DeckLogo[];
+    /** `Context:` small line under the headline row (data layout). */
+    readonly context?: string;
+    /** `Conclusion:` the finding, one sentence under the headline (data layout). */
+    readonly conclusion?: string;
+    /** A GFM table, painted as a native table (data layout). */
+    readonly table?: DeckTable;
+    /** `Notes:` presenter notes, one paragraph per line. */
+    readonly notes?: string;
 }
 export interface DeckMeta {
     readonly title?: string;

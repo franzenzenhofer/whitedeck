@@ -185,6 +185,8 @@ export const renderPptx = async (deck, outPath) => {
         const target = pptx.addSlide();
         target.background = { color: (slide.background ?? WHITE.background).replace('#', '') };
         addSlideContent(target, slide, deck.meta);
+        if (slide.notes !== undefined)
+            target.addNotes(slide.notes);
     }
     await pptx.writeFile({ fileName: outPath });
     await escapeRelationshipTargets(outPath);

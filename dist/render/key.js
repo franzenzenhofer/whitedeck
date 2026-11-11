@@ -6,7 +6,7 @@ import { promisify } from 'node:util';
 import { PDFArray, PDFDict, PDFDocument, PDFName, PDFString, PDFHexString } from 'pdf-lib';
 import { FormatUnavailableError, noKeynote } from '../capability.js';
 import { dummyStringsIn } from '../theme/dummy.js';
-import { findKeynoteApp } from './key-app.js';
+import { findKeynoteApp, keynoteSwitchedOff } from './key-app.js';
 import { renderPptx } from './pptx.js';
 const execFileAsync = promisify(execFile);
 /*
@@ -222,8 +222,9 @@ export const verifyKey = async (deck, keyPath) => {
     }
 };
 export const renderKey = async (deck, outPath) => {
-    if ((await findKeynoteApp(process.platform)) === undefined)
-        throw new FormatUnavailableError(noKeynote(process.platform));
+    if ((await findKeynoteApp(process.platform)) === undefined) {
+        throw new FormatUnavailableError(noKeynote({ platform: process.platform, keynoteOff: keynoteSwitchedOff() }));
+    }
     const wasRunning = await keynoteIsRunning();
     try {
         /* Keynote names the imported document after the file it came from, and that name

@@ -24,8 +24,10 @@ const rejectUnpaintable = (lines, index, slide, lineNo) => {
         throw unsupported(slide, lineNo, `heading "${line.trim()}"`, 'a slide has one "# title" and one "## subtitle". Use a **bold** bullet for a sub-heading.');
     }
     const next = lines[index + 1];
-    if (line.includes('|') && next !== undefined && isTableDelimiter(next)) {
-        throw unsupported(slide, lineNo, `table "${line.trim()}"`, 'Keynote White has no table style. Use the compare layout, bullets, or a screenshot image.');
+    /* Tables are painted as native tables on the data layout; rows are recognised by
+       their leading pipe, so a table must write one on every row. */
+    if (line.includes('|') && !line.trimStart().startsWith('|') && next !== undefined && isTableDelimiter(next)) {
+        throw unsupported(slide, lineNo, `table row without a leading pipe "${line.trim()}"`, 'start every table row with "|" (| a | b |).');
     }
 };
 /**

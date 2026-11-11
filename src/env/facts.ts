@@ -2,7 +2,7 @@ import { existsSync, readdirSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { FormatUnavailableError, noBrowser, type MachineFacts } from '../capability.js';
-import { findKeynoteApp } from '../render/key-app.js';
+import { findKeynoteApp, keynoteSwitchedOff } from '../render/key-app.js';
 import { browserCacheRoots, browserCandidates, newestFirst, type BrowserSearch } from './browser-paths.js';
 
 /* The only place that looks at the real machine. Everything it learns is handed on as
@@ -37,7 +37,8 @@ export const findBrowser = (env: NodeJS.ProcessEnv = process.env): string | unde
 /** Probe this machine once: OS, Keynote, browser. */
 export const machineFacts = async (env: NodeJS.ProcessEnv = process.env): Promise<MachineFacts> => ({
   platform: process.platform,
-  keynoteApp: await findKeynoteApp(process.platform),
+  keynoteApp: await findKeynoteApp(process.platform, env),
+  keynoteOff: keynoteSwitchedOff(env),
   browser: findBrowser(env),
   chromePathEnv: chromePathOf(env),
 });

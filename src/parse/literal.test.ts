@@ -58,8 +58,13 @@ describe('markdown whitedeck cannot paint fails loudly', () => {
     expect(() => second('### small heading\n- x')).toThrow(/slide 2, line 6: heading "### small heading" is not supported/);
   });
 
-  it('rejects a table naming its slide and header line', () => {
-    expect(() => second('| a | b |\n|---|:-:|\n| 1 | 2 |')).toThrow(/slide 2, line 6: table "\| a \| b \|" is not supported/);
+  it('rejects a table outside the data layout, naming the layout', () => {
+    const md = '# A\n\n---\n\n<!-- _class: title-bullets -->\n# B\n| a | b |\n|---|:-:|\n| 1 | 2 |';
+    expect(() => parseDeck(md)).toThrow(/belong to the data layout, this slide is "title-bullets"/);
+  });
+
+  it('rejects a table row without a leading pipe, naming its slide and line', () => {
+    expect(() => second('a | b\n---|---\n1 | 2')).toThrow(/slide 2, line 6: table row without a leading pipe "a \| b"/);
   });
 
   it('leaves a pipe in ordinary bullet text alone', () => {

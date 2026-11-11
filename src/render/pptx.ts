@@ -41,6 +41,7 @@ interface PptxSlide extends CustomSlide {
   addText(text: string | TextItem[], options: TextBoxOptions): void;
   addImage(options: ImageOptions): void;
   addShape(name: 'rect', options: ShapeOptions): void;
+  addNotes(notes: string): void;
   background: { color: string };
 }
 
@@ -248,6 +249,7 @@ export const renderPptx = async (deck: Deck, outPath: string): Promise<void> => 
     const target = pptx.addSlide();
     target.background = { color: (slide.background ?? WHITE.background).replace('#', '') };
     addSlideContent(target, slide, deck.meta);
+    if (slide.notes !== undefined) target.addNotes(slide.notes);
   }
   await pptx.writeFile({ fileName: outPath });
   await escapeRelationshipTargets(outPath);

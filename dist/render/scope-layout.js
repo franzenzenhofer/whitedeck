@@ -1,20 +1,8 @@
-import { BLACK, CAPTION, COMPARE, HEADER_RULE, LABEL_BLUE, LABEL_TEXT, LOGO, NOTES, SCOPE_LABEL, SCOPE_TEXT, SCOPE_TITLE, SECTION_LEFT, SHOT_FRAME, SHOT_NOTES, TITLE_BULLETS_LEFT, TITLE_LEFT, TOOL_LOGO, compareColumn, compareLabelBar, compareNotes, isCustomLayout, isScopeLayout, } from '../theme/scope.js';
-import { inlineVisibleText, parseInline } from '../parse/inline.js';
+import { BLACK, CAPTION, COMPARE, DATA_LAYOUT_ID, HEADER_RULE, LABEL_BLUE, LABEL_TEXT, LOGO, NOTES, SCOPE_LABEL, SCOPE_TEXT, SCOPE_TITLE, SECTION_LEFT, SHOT_FRAME, SHOT_NOTES, TITLE_BULLETS_LEFT, TITLE_LEFT, TOOL_LOGO, compareColumn, compareLabelBar, compareNotes, isCustomLayout, isScopeLayout, } from '../theme/scope.js';
+import { inlineVisibleText } from '../parse/inline.js';
 import { fittedNotesSizePt, fittedSizePt, notesHeightPt, scaledGapPt } from './fit.js';
-import { imageSize } from './geometry.js';
-/** Contain-fit an image into a frame; a right-aligned fit keeps the right edge. */
-const fitInto = (path, frame, alignRight = false) => {
-    const size = imageSize(path);
-    if (size === undefined || size.w === 0 || size.h === 0) {
-        throw new Error(`image is not a readable PNG or JPEG: ${path}`);
-    }
-    const scale = Math.min(frame.w / size.w, frame.h / size.h);
-    const w = size.w * scale;
-    const h = size.h * scale;
-    const x = alignRight ? frame.x + frame.w - w : frame.x + (frame.w - w) / 2;
-    return { x, y: frame.y + (frame.h - h) / 2, w, h };
-};
-const firstUrl = (text) => text === undefined ? undefined : parseInline(text).find((seg) => seg.url !== undefined)?.url;
+import { placeDataSlide } from './data-layout.js';
+import { firstUrl, fitInto, text } from './placed.js';
 const image = (img, frame, url) => ({
     kind: 'image',
     path: img.path,
@@ -22,7 +10,6 @@ const image = (img, frame, url) => ({
     ...(img.border !== undefined && { border: img.border }),
     ...(url !== undefined && { url }),
 });
-const text = (box, value) => ({ kind: 'text', box, text: value });
 /* Headlines shrink like Keynote placeholders do; the same size then reaches
    every painter through the box. */
 const MIN_TITLE_PT = 40;
@@ -141,6 +128,8 @@ export const placeCustomSlide = (slide, meta) => {
     if (!isCustomLayout(slide.layout))
         throw new Error(`${slide.layout} is not a custom layout`);
     try {
+        if (slide.layout === DATA_LAYOUT_ID)
+            return [...placeDataSlide(slide), ...logo(meta)];
         if (isScopeLayout(slide.layout))
             return [...header(slide), ...scopeBody(slide), ...caption(slide), ...logo(meta)];
         return [...leftBody(slide), ...logo(meta)];

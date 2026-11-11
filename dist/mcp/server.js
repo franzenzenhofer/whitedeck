@@ -7,6 +7,7 @@ import { planBuild } from '../capability.js';
 import { machineFacts } from '../env/facts.js';
 import { OUTPUT_FORMATS, renderFormat } from '../formats.js';
 import { checkedBaseName, deckFileBase } from '../name.js';
+import { lintDeck } from '../lint.js';
 import { parseDeck } from '../parse/deck.js';
 import { LAYOUT_IDS, layoutOf } from '../theme/white.js';
 const server = new McpServer({ name: 'whitedeck', version: '0.1.0' });
@@ -18,11 +19,18 @@ server.registerTool('whitedeck_layouts', {
     inputSchema: {},
 }, () => jsonResult(LAYOUT_IDS.map((id) => ({ id, keynoteName: layoutOf(id).keynoteName }))));
 server.registerTool('whitedeck_validate', {
-    description: 'Parse and validate whitedeck markdown; returns slide count and resolved layouts.',
+    description: 'Parse and validate whitedeck markdown; returns slide count, resolved layouts, and editorial errors / warnings (data slides: finding verb or % in a headline, % without absolutes or compact ranges in a conclusion).',
     inputSchema: { markdown: z.string().describe('The deck markdown to validate') },
 }, ({ markdown }) => {
     const deck = parseDeck(markdown);
-    return jsonResult({ ok: true, slides: deck.slides.length, layouts: deck.slides.map((s) => s.layout) });
+    const { errors, warnings } = lintDeck(deck);
+    return jsonResult({
+        ok: errors.length === 0,
+        slides: deck.slides.length,
+        ...(errors.length > 0 && { errors }),
+        ...(warnings.length > 0 && { warnings }),
+        layouts: deck.slides.map((s) => s.layout),
+    });
 });
 server.registerTool('whitedeck_build', {
     description: 'Render whitedeck markdown into presentation files that look exactly like Apple Keynote White theme. Formats: html (always), pptx (editable, always, no PowerPoint needed), pdf (needs Chrome, Chromium or Edge), key (macOS with Keynote only). "all" builds every format this machine can produce and lists the rest under "skipped" with reason and fix; a format named explicitly that cannot be built fails the call.',

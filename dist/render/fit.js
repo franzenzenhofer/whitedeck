@@ -43,3 +43,5 @@ export const fittedSizePt = (text, box) => {
     }
     return box.minPt;
 };
+/** Height in pt of `text` wrapped into `widthPt` at `sizePt`. */
+export const textHeightPt = (text, sizePt, widthPt) => wrappedLines(text.length, sizePt, widthPt) * sizePt * LINE_HEIGHT_EM;
