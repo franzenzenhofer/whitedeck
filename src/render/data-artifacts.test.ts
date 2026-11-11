@@ -114,6 +114,32 @@ describe('data layout pptx: every header text is a native text object', () => {
   });
 });
 
+describe('data layout tables: P5, both sides of the threshold', () => {
+  const tableDeck = (rows: number, cell: string) =>
+    parseDeck(
+      ['# GSC: clicks by city', 'Conclusion: 1,234 of 5,678 clicks', '| city | 2025 | 2026 | change |', '| --- | ---: | ---: | ---: |']
+        .concat(Array.from({ length: rows }, (_, i) => `| ${cell} ${i} | 12,614,687 | 11,145,246 | -11.6 % |`))
+        .join('\n'),
+    );
+
+  it('fits a 10 x 4 table at 16pt or more inside the evidence band', () => {
+    const slide = tableDeck(10, 'Frankfurt am Main').slides[0];
+    if (slide === undefined) throw new Error('no slide');
+    const table = placeCustomSlide(slide, {}).find((p) => p.kind === 'table');
+    if (table?.kind !== 'table') throw new Error('no table placed');
+    expect(table.sizePt).toBeGreaterThanOrEqual(16);
+    expect(table.rect.y + table.rect.h).toBeLessThanOrEqual(988);
+  });
+
+  it('fails a table too tall for the slide, and a cell too wide for its column', () => {
+    const tall = tableDeck(40, 'x').slides[0];
+    const wide = tableDeck(2, 'a'.repeat(400)).slides[0];
+    if (tall === undefined || wide === undefined) throw new Error('no slide');
+    expect(() => placeCustomSlide(tall, {})).toThrow(/split it over two slides/);
+    expect(() => placeCustomSlide(wide, {})).toThrow(/does not fit its column even at 16pt/);
+  });
+});
+
 describe('data layout HTML: the same geometry as the pptx', () => {
   it('paints pills and the table at the placed pixel positions', () => {
     const md = toMarpMarkdown(deck);

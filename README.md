@@ -148,8 +148,9 @@ Source: [GSC Performance](https://search.google.com/search-console)
 Links `[text](url)` render blue and underlined in every format (real hyperlinks in PPTX).
 A final `Source: [Name](url)` line becomes a small source note at the bottom of the slide.
 Titles that would overflow their box auto-shrink, exactly like Keynote.
-Fenced code blocks (```` ``` ```` or `~~~`), `###` headings and tables fail `validate` and `build`
-with their slide and line: Keynote White has no style for them. HTML comments are hidden, and deck
+Fenced code blocks (```` ``` ```` or `~~~`) and `###` headings fail `validate` and `build`
+with their slide and line: Keynote White has no style for them. Tables are native tables on the
+`data` layout (below) and an error everywhere else. HTML comments are hidden, and deck
 syntax shown in inline `code` (a directive, an image) stays text on the slide.
 
 List all layouts: `whitedeck layouts`
@@ -161,12 +162,43 @@ photo-horizontal photo-vertical   photo-3-up       quote            blank
 compare          (virtual: side-by-side bullet columns on Keynote geometry)
 title-left       section-left     title-bullets-left   (left-aligned at a 54pt margin)
 scope-shot       scope-compare    scope-shot-notes     (annotated screenshot slides)
+data             (headline, tag pills, source logos, context, conclusion, chart/table, source)
 ```
 
 Annotated screenshot slides carry a `Scope:` header line, a `Tool:` logo, bordered
 screenshots (`![border=red label="JS on"](shot.png)`), a notes column and a `Caption:` link;
 `logo: x.png` in the front matter paints a logo on every slide; `**bold**` and `[x]{#1db100}`
 colour runs survive into PPTX and Keynote. See `examples/scope-demo.md` and the skill.
+
+### Data slides: every text editable in Keynote
+
+A chart slide whose headline, tags and conclusion are baked into the chart PNG cannot be edited.
+The `data` layout paints them as native objects instead - text boxes, rounded shapes with text,
+a native table - at fixed positions in every format; only the chart and the logos are pictures:
+
+```markdown
+# Search Console: example.com clicks per day
+Tags: 16 weeks | YoY
+Logos: gsc | search
+Context: weeks 1-16 of 2026, all queries, web search, Germany
+Conclusion: Clicks fell from 8,600 to 6,300 a day (-27 %) in week 8 and stayed there
+Notes: presenter notes for this slide
+
+![](data/clicks.png)
+
+| week | clicks per day |
+| --- | ---: |
+| 7 | 8,400 |
+| 9 | 6,500 |
+
+Source: [Search Console, Performance report](https://search.google.com/search-console)
+```
+
+Built-in logos: `ga4` `gsc` `search` `discover` `news` `ai-overviews` `ai-mode` `ads` `psi`
+(provenance and licences in `assets/logos/SOURCE.md`), or any image path with an optional
+`"Label"`. `Notes:` works on every layout. `whitedeck validate` warns on a finding verb or a %
+in a data headline and fails a conclusion with a % but no absolute number. Full example:
+`examples/data-demo.md`.
 
 ## CLI
 

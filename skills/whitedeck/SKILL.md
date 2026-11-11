@@ -40,6 +40,12 @@ always at the same positions:
    "40 % of sessions (1.2M of 3.0M) came from Google organic". This is where the assertion goes.
 6. Then the evidence (chart / table / screenshot) and the source line.
 
+**Build every data / analysis slide with the `data` layout** (section "Data slides" below): it
+paints exactly this anatomy, and every text on it - headline, tags, logo labels, context,
+conclusion, table cells, source - is a native text object in .key, .pptx, PDF and HTML, so the
+deck owner can edit it in Keynote. Never bake the headline, tags, logos or conclusion into the
+chart PNG: the PNG carries only the plot and its legend.
+
 Also: every % with its absolute numbers and every absolute with its % (both ways); ranges
 written out with units ("13 % to 16 %", never "13-16"); a year-over-year comparison is LABELLED
 as one (tag `YoY` + context line saying what vs what) and shown with both absolute and share
@@ -156,8 +162,57 @@ Source: [GSC Performance](https://search.google.com/search-console/performance)
 ```
 
 Layouts: `title` `title-center` `title-top` `title-bullets` `bullets` `title-bullets-photo`
-`photo` `photo-horizontal` `photo-vertical` `photo-3-up` `quote` `blank` `compare`
+`photo` `photo-horizontal` `photo-vertical` `photo-3-up` `quote` `blank` `compare` `data`
 plus the left-aligned and annotated-screenshot layouts below.
+
+## Data slides (`data` layout) - the anatomy as native, editable objects
+
+```markdown
+# Google Analytics: sessions by channel
+Tags: 28 days | YoY
+Logos: ga4 | search
+Context: 13 Oct - 9 Nov 2026 vs 14 Oct - 10 Nov 2025, same weekdays
+Conclusion: Organic share 14.15 % -> 13.85 % (-0.30 pp): 12,614,687 -> 11,145,246 sessions
+Notes: what to say on this slide (presenter notes; one paragraph per Notes: line)
+
+![](charts/channels-yoy.png)
+
+| channel | 2025 | 2026 | change |
+| --- | ---: | ---: | ---: |
+| Organic search | 12,614,687 | 11,145,246 | -11.6 % |
+
+Source: [GA4 Explore export, 10 Nov 2026](https://analytics.google.com/)
+```
+
+A slide with any of `Tags:` / `Logos:` / `Context:` / `Conclusion:` or a table becomes a
+`data` slide by itself (or write `<!-- _class: data -->`). Fixed positions on every data slide:
+
+| element | markdown | in .key / .pptx |
+|---|---|---|
+| headline (what is shown) | `# ...` | text box, 56pt, shrinks on one line to 40pt, then 2 lines |
+| tags (time window, YoY) | `Tags: 28 days \| YoY` | rounded shape WITH editable text, right of the headline |
+| source logos | `Logos: gsc \| search \| path/x.png "Label"` | picture + label as text box (icons) |
+| context line (optional) | `Context: ...` | small grey text box under the headline row |
+| conclusion (required) | `Conclusion: ...` | text box under the context line |
+| evidence | 1-3 `![](chart.png)` side by side, a `\| table \|`, images over a table, OR max 5 bullets | pictures / native table / text |
+| source line | `Source: [..](url)` | text box at the bottom, the chart links to its first URL |
+| presenter notes | `Notes: ...` (any layout) | Keynote presenter notes |
+
+Built-in logos (`Logos:` ids): `ga4` (Google Analytics wordmark), `gsc` (Search Console wordmark),
+`search`, `discover`, `news`, `ai-overviews`, `ai-mode`, `ads` (icons, labelled "Google Search" ...),
+`psi` (PageSpeed Insights wordmark). Any image path works too; `"Label"` after an item sets
+or overrides its text label. Provenance and licences: `assets/logos/SOURCE.md`.
+
+Fails at parse time (never in front of a client): a data slide without `# headline` or
+`Conclusion:`, a `##` subtitle on it, bullets next to images, more than 3 images, the data fields
+on another layout, an unknown logo id, a ragged table row, a headline the tags leave < 760pt,
+text that does not fit its box at the minimum size. `whitedeck validate` additionally
+**warns** on a finding verb ("fell", "rose", "lost" ...) or a % in a data headline and
+**errors** on a conclusion with a % but no absolute number, or a compact range ("13-16 %").
+
+Tables: GFM pipe tables, every row starting with `|`; `:--` / `--:` / `:-:` align;
+inline `**bold**` and links work in cells; cells never wrap - a cell that does not fit at 16pt
+is a build error. Only on the `data` layout.
 
 ## Annotated screenshot layouts (scope-*) and left-aligned layouts
 
@@ -220,11 +275,14 @@ for section dividers with one line of text.
 
 - Titles get Helvetica Neue Medium 112pt automatically - never restyle output files.
 - Image paths resolve relative to the markdown file.
-- No fenced code blocks (```` ``` ```` / `~~~`), `###` headings or tables: they fail validate and
+- No fenced code blocks (```` ``` ```` / `~~~`) or `###` headings: they fail validate and
   build, because Keynote White has no style for them. Show code as a screenshot image or inline
-  `code`, a sub-heading as a **bold** bullet, a table as the compare layout or a screenshot.
+  `code`, a sub-heading as a **bold** bullet. Tables only on the `data` layout (native table).
 - `<!-- comments -->` never reach a slide. Directives must be a line of their own.
 - `-f key` needs macOS + Keynote (runs in background, quits after). Elsewhere use pptx.
+  `WHITEDECK_KEYNOTE=off` switches Keynote off on a Mac where someone works (Keynote opens
+  windows and error sheets while it imports): `-f key` then fails with that reason, `-f all`
+  skips it, and the Keynote tests skip. Build the .key on the build Mac instead.
 - Paths may contain spaces and backslashes; quote them in the shell (`"C:\My Decks\deck.md"`).
 
 ## Best practice: the IS / SHOULD / WHY audit deck

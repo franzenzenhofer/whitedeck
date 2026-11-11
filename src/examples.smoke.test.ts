@@ -17,7 +17,7 @@ import { parseDeck } from './parse/deck.js';
 const execFileAsync = promisify(execFile);
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const CLI = join(ROOT, 'dist', 'cli.js');
-const EXAMPLES = ['demo.md', 'scope-demo.md'];
+const EXAMPLES = ['demo.md', 'scope-demo.md', 'data-demo.md'];
 const facts = await machineFacts();
 const keyHere = facts.platform === 'darwin' && facts.keynoteApp !== undefined;
 
@@ -42,6 +42,6 @@ describe(`examples build with -f all on ${process.platform}`, () => {
     const pages = (await PDFDocument.load(readFileSync(join(outDir, pdf)))).getPageCount();
     expect(pages).toBe(parseDeck(readFileSync(input, 'utf8')).slides.length);
     if (keyHere) expect(stderr).toBe('');
-    else expect(stderr.trim()).toMatch(/^skipped key: (Keynote is macOS-only|Keynote\.app not found)[^\n]*$/);
+    else expect(stderr.trim()).toMatch(/^skipped key: (Keynote is macOS-only|Keynote\.app not found|Keynote is switched off)[^\n]*$/);
   });
 });
