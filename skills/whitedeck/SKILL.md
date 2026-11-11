@@ -46,6 +46,10 @@ conclusion, table cells, source - is a native text object in .key, .pptx, PDF an
 deck owner can edit it in Keynote. Never bake the headline, tags, logos or conclusion into the
 chart PNG: the PNG carries only the plot and its legend.
 
+Change colours in every table (Franz, 11 Nov 2026): every change value (absolute AND %) is coloured - negative = RED,
+positive = GREEN, "more or less the same" = GREY (default: |change| < 1 %, state the threshold in the slide's footnote once). Applies
+to change columns, deltas, "pp" share changes and conclusion-line numbers in tables; the row totals follow the same rule.
+
 Comparison windows (Franz, 11 Nov 2026): a time series = the full 16 months (GSC maximum) with a trend line (method + slope
 in the legend); a year-over-year comparison = ALWAYS the last 28 days vs the same 28 days 364 days earlier (same weekdays). Never
 ad-hoc windows like "first 8 weeks / last 8 weeks / same 8 weeks a year earlier".
