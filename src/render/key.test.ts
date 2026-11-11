@@ -60,6 +60,14 @@ describe('the .key is built by importing the pptx, never slide by slide', () => 
     expect(script).toContain('save d in POSIX file "/tmp/x/Deck.key"');
   });
 
+  /* 2026-11-11 on the build Mac: two jobs imported at once and `front document` was the
+     other job's deck - whitedeck saved it under our name. */
+  it('saves ITS document - a new id with the file\'s name - never the front document', () => {
+    expect(script).not.toContain('front document');
+    expect(script).toContain('set priorIds to id of every document');
+    expect(script).toContain('(priorIds does not contain (id of x)) and ((name of x) starts with "Deck")');
+  });
+
   it('reads the saved .key back for the post-build check', () => {
     const back = readBackScript('/tmp/x/Deck.key');
     expect(back).toContain('open (POSIX file "/tmp/x/Deck.key")');

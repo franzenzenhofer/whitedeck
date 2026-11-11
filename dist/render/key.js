@@ -39,27 +39,38 @@ const IMPORT_TIMEOUT_SECONDS = 600;
    `unmerge id "..." doesn't understand the "save" message`, or with
    `Can't make missing value into type specifier (-1700)` when the placeholder is
    empty, or with `AppleEvent timed out (-1712)` when the import is still running.
-   Never use the return value: count the documents first, open, poll until the
-   count rises, then take `front document`. Targeting the bundle id rather than the
-   name also matters - the .app may be renamed on disk, and the error text then
-   names the renamed file, which looks like a different application entirely. */
+   Never use the return value. And never take `front document` either: on a Mac where
+   another job imports a pptx at the same time (seen on the build Mac 2026-11-11), the
+   front document is THEIR deck, and whitedeck saved it under our name. Record the ids
+   of the open documents first, open, then poll for a NEW document whose name is our
+   file's name. Targeting the bundle id rather than the app name also matters - the .app
+   may be renamed on disk, and the error text then names the renamed file. */
 const IMPORT_POLL_TRIES = 240;
 const IMPORT_POLL_DELAY_SECONDS = 5;
-const openFrontDocument = (path) => [
-    '    set priorCount to count of documents',
-    `    open (POSIX file ${str(path)})`,
-    `    repeat ${IMPORT_POLL_TRIES} times`,
-    `      delay ${IMPORT_POLL_DELAY_SECONDS}`,
-    '      if (count of documents) > priorCount then exit repeat',
-    '    end repeat',
-    `    if (count of documents) is priorCount then error "Keynote did not open " & ${str(path)}`,
-    '    set d to front document',
-];
+/** AppleScript lines that open `path` and bind ITS document to `d` - never another one. */
+export const openDocumentLines = (path) => {
+    const stem = posix.basename(path).replace(/\.[^.]+$/, '');
+    return [
+        '    set priorIds to id of every document',
+        `    open (POSIX file ${str(path)})`,
+        '    set d to missing value',
+        `    repeat ${IMPORT_POLL_TRIES} times`,
+        `      delay ${IMPORT_POLL_DELAY_SECONDS}`,
+        '      repeat with x in documents',
+        `        try`,
+        `          if (priorIds does not contain (id of x)) and ((name of x) starts with ${str(stem)}) then set d to contents of x`,
+        '        end try',
+        '      end repeat',
+        '      if d is not missing value then exit repeat',
+        '    end repeat',
+        `    if d is missing value then error "Keynote did not open " & ${str(path)}`,
+    ];
+};
 /** The AppleScript that turns the pptx into the .key. The only script that builds a deck. */
 export const importScript = (pptxPath, outPath) => [
     `with timeout of ${IMPORT_TIMEOUT_SECONDS} seconds`,
     '  tell application id "com.apple.Keynote"',
-    ...openFrontDocument(pptxPath),
+    ...openDocumentLines(pptxPath),
     `    save d in POSIX file ${str(resolve(outPath))}`,
     '    close d saving no',
     '  end tell',
@@ -71,7 +82,7 @@ const SLIDE_SEP = '\u001e';
 export const readBackScript = (keyPath) => [
     `with timeout of ${IMPORT_TIMEOUT_SECONDS} seconds`,
     '  tell application id "com.apple.Keynote"',
-    ...openFrontDocument(resolve(keyPath)),
+    ...openDocumentLines(resolve(keyPath)),
     '    set out to {}',
     '    repeat with s in slides of d',
     '      set t to ""',
@@ -105,7 +116,7 @@ export const readBackScript = (keyPath) => [
 export const exportPdfScript = (keyPath, pdfPath) => [
     `with timeout of ${IMPORT_TIMEOUT_SECONDS} seconds`,
     '  tell application id "com.apple.Keynote"',
-    ...openFrontDocument(resolve(keyPath)),
+    ...openDocumentLines(resolve(keyPath)),
     `    export d to POSIX file ${str(resolve(pdfPath))} as PDF with properties {export style:IndividualSlides, all stages:false}`,
     '    close d saving no',
     '  end tell',

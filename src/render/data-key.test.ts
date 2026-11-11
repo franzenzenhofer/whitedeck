@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { parseDeck } from '../parse/deck.js';
 import { inlineVisibleText } from '../parse/inline.js';
 import { findKeynoteApp } from './key-app.js';
-import { renderKey, runAppleScript } from './key.js';
+import { openDocumentLines, renderKey, runAppleScript } from './key.js';
 
 /*
  * The editability proof (Franz, 11 Nov 2026: "the headlines and the stuff below should
@@ -70,13 +70,7 @@ const objectsScript = (keyPath: string): string =>
   [
     'with timeout of 600 seconds',
     '  tell application id "com.apple.Keynote"',
-    '    set priorCount to count of documents',
-    `    open (POSIX file "${keyPath}")`,
-    '    repeat 240 times',
-    '      delay 5',
-    '      if (count of documents) > priorCount then exit repeat',
-    '    end repeat',
-    '    set d to front document',
+    ...openDocumentLines(keyPath),
     '    set out to {}',
     '    set n to 0',
     '    repeat with s in slides of d',

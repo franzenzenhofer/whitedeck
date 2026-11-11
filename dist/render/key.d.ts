@@ -1,4 +1,6 @@
 import type { Deck } from '../parse/deck.js';
+/** AppleScript lines that open `path` and bind ITS document to `d` - never another one. */
+export declare const openDocumentLines: (path: string) => string[];
 /** The AppleScript that turns the pptx into the .key. The only script that builds a deck. */
 export declare const importScript: (pptxPath: string, outPath: string) => string;
 /** Reopens a saved .key and returns every visible text of every slide, slides separated by SLIDE_SEP. */
