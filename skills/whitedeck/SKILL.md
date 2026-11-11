@@ -46,6 +46,12 @@ conclusion, table cells, source - is a native text object in .key, .pptx, PDF an
 deck owner can edit it in Keynote. Never bake the headline, tags, logos or conclusion into the
 chart PNG: the PNG carries only the plot and its legend.
 
+Comparison numbers must be self-explaining (Franz, 11 Nov 2026: "I don't know what is 2026, what is 25 ... must be super clear with
+clear colors, clear coding, tables"): never "387,178 vs 467,408". Every number carries its label (year / window) AND is set in the
+same colour as its line or bar in the chart (e.g. 2026 = solid blue, 2025 = light dashed blue), and a comparison is a mini table
+next to or under the chart: rows = 2025 / 2026 / change, columns = the metric(s); the change row coloured (negative red, positive green,
+~same grey). The conclusion line then only states the takeaway in words + the one change number.
+
 Change colours in every table (Franz, 11 Nov 2026): every change value (absolute AND %) is coloured - negative = RED,
 positive = GREEN, "more or less the same" = GREY (default: |change| < 1 %, state the threshold in the slide's footnote once). Applies
 to change columns, deltas, "pp" share changes and conclusion-line numbers in tables; the row totals follow the same rule.
