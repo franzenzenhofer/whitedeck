@@ -1,6 +1,6 @@
 import { BLACK, CAPTION, COMPARE, DATA_LAYOUT_ID, HEADER_RULE, LABEL_BLUE, LABEL_TEXT, LOGO, NOTES, SCOPE_LABEL, SCOPE_TEXT, SCOPE_TITLE, SECTION_LEFT, SHOT_FRAME, SHOT_NOTES, SHOT_SIDE, TITLE_BULLETS_LEFT, TITLE_LEFT, TOOL_LOGO, compareColumn, compareLabelBar, compareNotes, isCustomLayout, isScopeLayout, } from '../theme/scope.js';
 import { inlineVisibleText } from '../parse/inline.js';
-import { AVG_GLYPH_EM, fittedNotesSizePt, fittedSizePt, notesHeightPt, scaledGapPt } from './fit.js';
+import { fittedNotesSizePt, fittedSizePt, notesHeightPt, scaledGapPt } from './fit.js';
 import { placeDataSlide } from './data-layout.js';
 import { firstUrl, fitInto, text } from './placed.js';
 const image = (img, frame, url) => ({
@@ -18,9 +18,12 @@ const logo = (meta) => meta.logo === undefined ? [] : [{ kind: 'image', path: me
 /* scope-title: one-line - the largest size (0.1pt steps, never above the layout size) at which the headline is
    ONE line by the shared glyph estimate; a headline that would need less than 30pt is a build error, not a wrap. */
 const MIN_ONE_LINE_PT = 30;
+/* Measured 11 Nov 2026 in Chrome (PDF path): a 74-glyph Helvetica Neue Medium headline with dates and times
+   ran 0.50-0.51em per glyph (digits are 0.556em), wider than AVG_GLYPH_EM; 0.54 keeps it on one line. */
+export const ONE_LINE_GLYPH_EM = 0.54;
 const oneLineTitle = (box, value) => {
     const chars = inlineVisibleText(value).length;
-    const size = Math.min(box.sizePt, Math.floor((box.w / (chars * AVG_GLYPH_EM)) * 10) / 10);
+    const size = Math.min(box.sizePt, Math.floor((box.w / (chars * ONE_LINE_GLYPH_EM)) * 10) / 10);
     if (size < MIN_ONE_LINE_PT) {
         throw new Error(`headline needs ${size}pt to stay on one line (min ${MIN_ONE_LINE_PT}pt) - shorten it: ${value}`);
     }

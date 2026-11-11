@@ -220,7 +220,8 @@ describe('scope-title: one-line', () => {
     const one = titleOf(md(title), title);
     expect(title.length * one.sizePt * 0.48).toBeLessThanOrEqual(one.w);
     expect(one.sizePt).toBeGreaterThanOrEqual(30);
-    expect(one.sizePt).toBeGreaterThan(one.w / (title.length * 0.48) - 0.11);
+    expect(one.sizePt).toBeGreaterThan(one.w / (title.length * 0.54) - 0.11);
+    expect(title.length * one.sizePt * 0.54).toBeLessThanOrEqual(one.w);
     /* without the option the same headline is fitted to two lines (the default behaviour stays) */
     const two = titleOf(md(title, 'title: t'), title);
     expect(title.length * two.sizePt * 0.48).toBeGreaterThan(two.w);
