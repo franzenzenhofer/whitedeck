@@ -50,6 +50,13 @@ export declare const DATA_TABLE: {
     readonly borderPt: 1;
     readonly color: "#000000";
 };
+/** Change values in tables: red / green, grey below this many % or pp (Google palette). */
+export declare const DATA_CHANGE: {
+    readonly negative: "#d93025";
+    readonly positive: "#188038";
+    readonly same: "#80868b";
+    readonly sameBelow: 1;
+};
 export declare const DATA_BULLETS: {
     readonly sizePt: 40;
     readonly minPt: 24;

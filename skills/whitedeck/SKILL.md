@@ -219,7 +219,10 @@ text that does not fit its box at the minimum size. `whitedeck validate` additio
 **errors** on a conclusion with a % but no absolute number, or a compact range ("13-16 %").
 
 Tables: GFM pipe tables, every row starting with `|`; `:--` / `--:` / `:-:` align;
-inline `**bold**` and links work in cells; cells never wrap - a cell that does not fit at 16pt
+inline `**bold**` and links work in cells; change cells colour themselves: a cell that is only a
+signed number (`-11.6 %`, `+0.4 pp`, `-1,469,441`) is red when negative, green when positive, grey when a
+% / pp change is below 1 (an absolute change takes the verdict of the % change in its row); state
+"grey = change below 1 %" once in the slide's source line; `[x]{#hex}` overrides; cells never wrap - a cell that does not fit at 16pt
 is a build error. Only on the `data` layout.
 
 ## Annotated screenshot layouts (scope-*) and left-aligned layouts

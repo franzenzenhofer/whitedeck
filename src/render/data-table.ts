@@ -3,6 +3,7 @@ import { inlineVisibleText } from '../parse/inline.js';
 import { DATA_TABLE } from '../theme/data.js';
 import type { PtRect } from '../theme/scope.js';
 import { AVG_GLYPH_EM } from './fit.js';
+import { colourChanges } from './change-colour.js';
 import type { PlacedTable } from './placed.js';
 
 /*
@@ -67,7 +68,7 @@ export const placeTable = (table: DeckTable, frame: PtRect, sizePt: number): Pla
     rowH,
     colW: columnWidths(table, frame.w),
     header: table.header,
-    rows: table.rows,
+    rows: table.rows.map(colourChanges),
     align: table.align,
     padPt: DATA_TABLE.padPt,
     headerFill: DATA_TABLE.headerFill,

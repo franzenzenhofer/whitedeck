@@ -60,6 +60,9 @@ export const DATA_TABLE = {
   headerFill: '#f2f2f2', border: '#c8c8c8', borderPt: 1, color: BLACK,
 } as const;
 
+/** Change values in tables: red / green, grey below this many % or pp (Google palette). */
+export const DATA_CHANGE = { negative: '#d93025', positive: '#188038', same: '#80868b', sameBelow: 1 } as const;
+
 export const DATA_BULLETS = { sizePt: 40, minPt: 24, spaceBeforePt: 24, indentPt: 40, bulletSizePct: 125 } as const;
 
 /** Source line; stops short of the deck logo bottom-right. */

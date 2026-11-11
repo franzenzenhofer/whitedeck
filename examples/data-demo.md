@@ -36,7 +36,7 @@ Conclusion: Organic share 14.15 % -> 13.85 % (-0.30 pp): 12,614,687 -> 11,145,24
 | Organic search | 12,614,687 | 11,145,246 | -11.6 % |
 | All channels | 89,149,000 | 80,456,931 | -9.7 % |
 
-Source: GA4 Explore export, property 123456, 10 Nov 2026
+Source: GA4 Explore export, property 123456, 10 Nov 2026; red = down, green = up, grey = change below 1 %
 
 ---
 

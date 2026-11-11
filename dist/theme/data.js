@@ -50,6 +50,8 @@ export const DATA_TABLE = {
     sizePt: 24, minPt: 16, rowEm: 1.9, padPt: 10, gapAbove: 24,
     headerFill: '#f2f2f2', border: '#c8c8c8', borderPt: 1, color: BLACK,
 };
+/** Change values in tables: red / green, grey below this many % or pp (Google palette). */
+export const DATA_CHANGE = { negative: '#d93025', positive: '#188038', same: '#80868b', sameBelow: 1 };
 export const DATA_BULLETS = { sizePt: 40, minPt: 24, spaceBeforePt: 24, indentPt: 40, bulletSizePct: 125 };
 /** Source line; stops short of the deck logo bottom-right. */
 export const DATA_SOURCE = {

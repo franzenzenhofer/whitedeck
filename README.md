@@ -196,7 +196,8 @@ Source: [Search Console, Performance report](https://search.google.com/search-co
 
 Built-in logos: `ga4` `gsc` `search` `discover` `news` `ai-overviews` `ai-mode` `ads` `psi`
 (provenance and licences in `assets/logos/SOURCE.md`), or any image path with an optional
-`"Label"`. `Notes:` works on every layout. `whitedeck validate` warns on a finding verb or a %
+`"Label"`. Signed change cells in tables colour themselves (red down, green up, grey below 1 %).
+`Notes:` works on every layout. `whitedeck validate` warns on a finding verb or a %
 in a data headline and fails a conclusion with a % but no absolute number. Full example:
 `examples/data-demo.md`.
 

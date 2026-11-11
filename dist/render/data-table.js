@@ -1,6 +1,7 @@
 import { inlineVisibleText } from '../parse/inline.js';
 import { DATA_TABLE } from '../theme/data.js';
 import { AVG_GLYPH_EM } from './fit.js';
+import { colourChanges } from './change-colour.js';
 /*
  * A native table in the data layout's evidence band. Columns share the width in
  * proportion to their longest cell; every cell stays on one line. The text shrinks
@@ -55,7 +56,7 @@ export const placeTable = (table, frame, sizePt) => {
         rowH,
         colW: columnWidths(table, frame.w),
         header: table.header,
-        rows: table.rows,
+        rows: table.rows.map(colourChanges),
         align: table.align,
         padPt: DATA_TABLE.padPt,
         headerFill: DATA_TABLE.headerFill,
