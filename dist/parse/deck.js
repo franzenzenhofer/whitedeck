@@ -186,8 +186,9 @@ const checkScope = (layout, slide) => {
         throw new Error(`${layout} needs at least one image`);
     if (layout === 'scope-shot' && slide.images.length !== 1)
         throw new Error('scope-shot takes exactly one image');
-    if (layout === 'scope-shot-notes' && slide.images.length !== 2)
-        throw new Error('scope-shot-notes takes exactly two images (main, side)');
+    if ((layout === 'scope-shot-notes' || layout === 'scope-shot-side') && slide.images.length !== 2) {
+        throw new Error(`${layout} takes exactly two images (main, side)`);
+    }
     if (layout === 'scope-compare' && slide.images.some((i) => i.label === undefined)) {
         throw new Error('scope-compare: every image needs a label="..." attribute');
     }
@@ -218,7 +219,7 @@ const checkData = (layout, slide) => {
     }
 };
 /** Layouts whose bullets are grouped under bold headings (`- **IS**` then plain bullets). */
-const usesColumns = (layout) => layout === 'compare' || layout === 'scope-compare' || layout === 'scope-shot-notes';
+const usesColumns = (layout) => layout === 'compare' || layout === 'scope-compare' || layout === 'scope-shot-notes' || layout === 'scope-shot-side';
 const finalizeSlide = (slide, isFirst) => {
     const layout = slide.layout ?? inferLayout(slide, isFirst);
     if (!ALL_LAYOUT_IDS.includes(layout)) {
@@ -267,6 +268,10 @@ export const parseDeck = (markdown) => {
         ...(typeof data['title'] === 'string' && { title: data['title'] }),
         ...(typeof data['author'] === 'string' && { author: data['author'] }),
         ...(typeof data['logo'] === 'string' && { logo: data['logo'] }),
+        ...(data['scope-title'] === 'one-line' && { scopeTitle: 'one-line' }),
     };
+    if (data['scope-title'] !== undefined && data['scope-title'] !== 'one-line') {
+        throw new Error(`Unknown scope-title "${String(data['scope-title'])}". Use: one-line`);
+    }
     return { meta, slides };
 };

@@ -16,6 +16,7 @@ export const VIRTUAL_LAYOUTS = {
     'scope-compare': 'title-top',
     'scope-shot-notes': 'title-top',
     'data': 'title-top',
+    'scope-shot-side': 'title-top',
 };
 export const ALL_LAYOUT_IDS = [...LAYOUT_IDS, ...Object.keys(VIRTUAL_LAYOUTS)];
 export const layoutOf = (id) => {

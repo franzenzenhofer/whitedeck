@@ -237,6 +237,8 @@ For evidence decks - a screenshot per slide with a header telling WHICH page it
 is about, a tool logo, a coloured highlight box and a link to the tool result.
 
 - Front matter `logo: assets/logo.png` paints that image bottom-right on EVERY slide.
+- Front matter `scope-title: one-line` sizes every scope headline to ONE line (largest size up to 87.4pt, min 30pt;
+  shorter than 30pt = build error) instead of wrapping it - for long grouped headlines like `<city> <slug> - <tool> - <time> - 1 of 2`.
 - `Scope: Detail Page ([url](url))` - header line of a scope slide (`SCOPE:` is added, bold).
 - `Tool: assets/psi-logo.jpg` - tool logo, right-aligned in the header.
 - `Caption: [https://pagespeed.web.dev/...](https://pagespeed.web.dev/...)` - small grey line at the bottom.
@@ -246,7 +248,7 @@ is about, a tool logo, a coloured highlight box and a link to the tool result.
   label share ONE label bar.
 - Inline runs everywhere: `**bold**` (real bold in pptx and Keynote too), `[green]{#1db100}`
   colours a run, `[label](url)` links.
-- Notes column (`scope-compare`, `scope-shot-notes`): bullets grouped under bold headings,
+- Notes column (`scope-compare`, `scope-shot-notes`, `scope-shot-side`): bullets grouped under bold headings,
   same syntax as `compare`: `- **IS (not ok)**` then plain bullets, `- **SHOULD**` then bullets.
 
 | layout | content |
@@ -257,6 +259,7 @@ is about, a tool logo, a coloured highlight box and a link to the tool result.
 | `scope-shot` | header + `#` title + ONE bordered screenshot centred + `Caption:` |
 | `scope-compare` | header + title + 2-3 labelled screenshot columns + notes column |
 | `scope-shot-notes` | header + title + big screenshot (1st) + small side screenshot (2nd) + notes + caption |
+| `scope-shot-side` | header + title + big screenshot (1st, 1150pt) + LARGE side image (2nd, 630 x 600pt, a third of the slide) + notes under it + caption |
 
 ```markdown
 <!-- _class: scope-compare -->
@@ -278,7 +281,7 @@ Tool: assets/chrome-logo.png
 ```
 
 `whitedeck validate` fails loudly when a scope slide has no `Scope:` line, the wrong image count
-(`scope-shot` 1, `scope-shot-notes` 2) or a `scope-compare` image without `label=`.
+(`scope-shot` 1, `scope-shot-notes` / `scope-shot-side` 2) or a `scope-compare` image without `label=`.
 Screenshots link to the caption URL (or the scope URL) in every format. A deck using these layouts
 or a `logo:` reaches `.key` through Keynote's own PowerPoint import, so links stay blue and
 underlined and bars/borders are native shapes (plain Keynote-layout decks keep the master-slide path).

@@ -70,6 +70,14 @@ export declare const SHOT_NOTES: {
     readonly notes: PtRect;
     readonly notesSizePt: 34.4;
 };
+/** scope-shot-side: big shot left, a LARGE side shot top-right (about a third of the slide wide), notes under it.
+ *  For a tall side panel (Page resources list) that must stay readable; the side frame is right-aligned to the margin. */
+export declare const SHOT_SIDE: {
+    readonly main: PtRect;
+    readonly side: PtRect;
+    readonly notes: PtRect;
+    readonly notesSizePt: 28;
+};
 /** Notes column typography (IS / SHOULD blocks): bullet glyph 125%, hanging indent 1em. */
 export declare const NOTES: {
     readonly bulletSizePct: 123;
@@ -95,7 +103,7 @@ export declare const TITLE_BULLETS_LEFT: {
     readonly bulletSizePct: 125;
     readonly indentPt: 50;
 };
-export declare const SCOPE_LAYOUT_IDS: readonly ["scope-shot", "scope-compare", "scope-shot-notes"];
+export declare const SCOPE_LAYOUT_IDS: readonly ["scope-shot", "scope-compare", "scope-shot-notes", "scope-shot-side"];
 export declare const LEFT_LAYOUT_IDS: readonly ["title-left", "section-left", "title-bullets-left"];
 export declare const isScopeLayout: (id: string) => boolean;
 export declare const isLeftLayout: (id: string) => boolean;

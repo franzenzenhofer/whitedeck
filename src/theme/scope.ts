@@ -95,6 +95,15 @@ export const SHOT_NOTES = {
   notesSizePt: 34.4,
 } as const;
 
+/** scope-shot-side: big shot left, a LARGE side shot top-right (about a third of the slide wide), notes under it.
+ *  For a tall side panel (Page resources list) that must stay readable; the side frame is right-aligned to the margin. */
+export const SHOT_SIDE = {
+  main: { x: MARGIN_PT, y: 200, w: 1150, h: 806 } as PtRect,
+  side: { x: 1236, y: 200, w: SLIDE_W_PT - MARGIN_PT - 1236, h: 600 } as PtRect,
+  notes: { x: 1236, y: 822, w: SLIDE_W_PT - MARGIN_PT - 1236, h: 184 } as PtRect,
+  notesSizePt: 28,
+} as const;
+
 /** Notes column typography (IS / SHOULD blocks): bullet glyph 125%, hanging indent 1em. */
 export const NOTES = { bulletSizePct: 123, spaceBeforePt: 30, indentEm: 1 } as const;
 
@@ -120,7 +129,7 @@ export const TITLE_BULLETS_LEFT = {
   indentPt: 50,
 } as const;
 
-export const SCOPE_LAYOUT_IDS = ['scope-shot', 'scope-compare', 'scope-shot-notes'] as const;
+export const SCOPE_LAYOUT_IDS = ['scope-shot', 'scope-compare', 'scope-shot-notes', 'scope-shot-side'] as const;
 export const LEFT_LAYOUT_IDS = ['title-left', 'section-left', 'title-bullets-left'] as const;
 export const isScopeLayout = (id: string): boolean => (SCOPE_LAYOUT_IDS as readonly string[]).includes(id);
 export const isLeftLayout = (id: string): boolean => (LEFT_LAYOUT_IDS as readonly string[]).includes(id);

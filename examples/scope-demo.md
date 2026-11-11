@@ -87,6 +87,26 @@ Caption: [https://search.google.com/search-console/inspect?resource_id=sc-domain
 
 ---
 
+<!-- _class: scope-shot-side -->
+
+Scope: Detail Page ([https://www.example.com/article/123](https://www.example.com/article/123))
+
+Tool: scope/tool-logo.png
+
+# Berlin wohnung-mieten - GSC Inspect URL - 31 Oct 2026 06:10 UTC - 1 of 2
+
+![border=red](scope/gsc.png)
+![border=red](scope/gsc-resources.png)
+
+- **IS (not ok)**
+- 0 of 20 listing cards
+- **SHOULD**
+- all cards
+
+Caption: [https://search.google.com/search-console/inspect?resource_id=sc-domain%3Aexample.com](https://search.google.com/search-console/inspect?resource_id=sc-domain%3Aexample.com)
+
+---
+
 <!-- _class: title-bullets -->
 
 # A Keynote-geometry slide keeps its logo and gets real bold runs

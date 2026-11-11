@@ -59,6 +59,14 @@ export const SHOT_NOTES = {
     notes: { x: 1238, y: 699.4, w: 629, h: 300 },
     notesSizePt: 34.4,
 };
+/** scope-shot-side: big shot left, a LARGE side shot top-right (about a third of the slide wide), notes under it.
+ *  For a tall side panel (Page resources list) that must stay readable; the side frame is right-aligned to the margin. */
+export const SHOT_SIDE = {
+    main: { x: MARGIN_PT, y: 200, w: 1150, h: 806 },
+    side: { x: 1236, y: 200, w: SLIDE_W_PT - MARGIN_PT - 1236, h: 600 },
+    notes: { x: 1236, y: 822, w: SLIDE_W_PT - MARGIN_PT - 1236, h: 184 },
+    notesSizePt: 28,
+};
 /** Notes column typography (IS / SHOULD blocks): bullet glyph 125%, hanging indent 1em. */
 export const NOTES = { bulletSizePct: 123, spaceBeforePt: 30, indentEm: 1 };
 /** title-left: headline, one link line under it, a footer line at the bottom. */
@@ -80,7 +88,7 @@ export const TITLE_BULLETS_LEFT = {
     bulletSizePct: 125,
     indentPt: 50,
 };
-export const SCOPE_LAYOUT_IDS = ['scope-shot', 'scope-compare', 'scope-shot-notes'];
+export const SCOPE_LAYOUT_IDS = ['scope-shot', 'scope-compare', 'scope-shot-notes', 'scope-shot-side'];
 export const LEFT_LAYOUT_IDS = ['title-left', 'section-left', 'title-bullets-left'];
 export const isScopeLayout = (id) => SCOPE_LAYOUT_IDS.includes(id);
 export const isLeftLayout = (id) => LEFT_LAYOUT_IDS.includes(id);

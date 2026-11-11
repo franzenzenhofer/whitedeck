@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { parseDeck } from '../parse/deck.js';
 import { parseInline, styledRuns } from '../parse/inline.js';
-import { COMPARE, compareLabelBar, compareNotes, LOGO, SHOT_FRAME } from '../theme/scope.js';
+import { COMPARE, compareLabelBar, compareNotes, LOGO, SCOPE_TITLE, SHOT_FRAME, SHOT_NOTES, SHOT_SIDE, type PtRect } from '../theme/scope.js';
+const SCOPE_TITLE_PT = SCOPE_TITLE.sizePt;
 import { placeCustomSlide } from './scope-layout.js';
 import { solidPngBytes, solidPngDims } from './solid-png.js';
 import { jpegSize, pngSize } from './geometry.js';
@@ -148,6 +149,89 @@ describe('placeCustomSlide geometry (points, measured on the reference deck)', (
 
     const overflows = parseDeck(shotNotesMd([LONG_LINE, LONG_LINE, LONG_LINE, LONG_LINE]));
     expect(() => placeCustomSlide(overflows.slides[0]!, overflows.meta)).toThrow(/slide "GSC Inspect URL": notes block does not fit .* even at 20pt/);
+  });
+});
+
+describe('scope-shot-side: a large side shot with the notes under it', () => {
+  const sideMd = (title: string, notes: readonly string[] = ['0 of 20 listing cards']): string =>
+    [
+      '<!-- _class: scope-shot-side -->',
+      '',
+      'Scope: x',
+      '',
+      `# ${title}`,
+      '',
+      '![border=red](examples/scope/gsc.png)',
+      '![border=red](examples/scope/gsc-resources.png)',
+      '',
+      '- **IS (not ok)**',
+      ...notes.map((l) => `- ${l}`),
+      '- **SHOULD**',
+      '- all cards',
+      '',
+      'Caption: [https://u.example/r](https://u.example/r)',
+    ].join('\n');
+
+  it('gives the side shot about a third of the slide, beside the main shot, notes below it, nothing on the caption', () => {
+    const deck = parseDeck(sideMd('GSC Inspect URL'));
+    const placed = placeCustomSlide(deck.slides[0]!, deck.meta);
+    const imgs = placed.filter((p) => p.kind === 'image' && p.border !== undefined);
+    expect(imgs).toHaveLength(2);
+    const [main, side] = imgs.map((p) => (p.kind === 'image' ? p.rect : undefined)) as [PtRect, PtRect];
+    expect(SHOT_SIDE.side.w / 1920).toBeGreaterThanOrEqual(0.3);
+    expect(SHOT_SIDE.side.w / 1920).toBeLessThanOrEqual(0.35);
+    expect(SHOT_SIDE.side.w).toBeGreaterThan(SHOT_NOTES.side.w * 1.5);
+    expect(main.x + main.w).toBeLessThan(side.x);
+    expect(side.x + side.w).toBeLessThanOrEqual(1920 - 54 + 0.01);
+    const notes = placed.find((p) => p.kind === 'notes');
+    if (notes?.kind !== 'notes') throw new Error('no notes');
+    expect(notes.box.y).toBeGreaterThanOrEqual(SHOT_SIDE.side.y + SHOT_SIDE.side.h);
+    expect(notes.box.y + notes.box.h).toBeLessThanOrEqual(1018);
+    expect(main.y + main.h).toBeLessThanOrEqual(1018);
+  });
+
+  it('keeps a 75-character headline on one line, takes exactly two images and refuses notes that cannot fit', () => {
+    const title = 'München wohnung-kaufen - Rich Results Test - 31 Oct 2026 15:44 UTC - 1 of 2';
+    const deck = parseDeck(sideMd(title));
+    const head = placeCustomSlide(deck.slides[0]!, deck.meta).find((p) => p.kind === 'text' && p.text === title);
+    if (head?.kind !== 'text') throw new Error('no title');
+    /* one line: the estimated width at the fitted size is inside the box, and the size is a readable headline */
+    expect(title.length * head.box.sizePt * 0.48).toBeLessThanOrEqual(head.box.w);
+    expect(head.box.sizePt).toBeGreaterThanOrEqual(44);
+    expect(() => parseDeck('<!-- _class: scope-shot-side -->\n\nScope: x\n\n![](a.png)')).toThrow(/scope-shot-side takes exactly two images/);
+    const long = 'partner badge (Intrepid) not rendered: image on legacy.asi-reisen.de blocked by robots.txt';
+    const over = parseDeck(sideMd('t', [long, long, long, long, long]));
+    expect(() => placeCustomSlide(over.slides[0]!, over.meta)).toThrow(/notes block does not fit/);
+  });
+});
+
+describe('scope-title: one-line', () => {
+  const md = (title: string, fm = 'scope-title: one-line'): string =>
+    ['---', fm, '---', '', '<!-- _class: scope-shot -->', '', 'Scope: x', '', `# ${title}`, '', '![](examples/scope/gsc.png)'].join('\n');
+  const titleOf = (src: string, title: string) => {
+    const deck = parseDeck(src);
+    const t = placeCustomSlide(deck.slides[0]!, deck.meta).find((p) => p.kind === 'text' && p.text === title);
+    if (t?.kind !== 'text') throw new Error('no title');
+    return t.box;
+  };
+
+  it('sizes a 95-character headline to one line instead of wrapping it at 46pt', () => {
+    const title = 'Berlin neubauwohnung-mieten ?enteredFrom=cb - Rich Results Test - 31 Oct 2026 15:44 UTC - 1 of 2';
+    const one = titleOf(md(title), title);
+    expect(title.length * one.sizePt * 0.48).toBeLessThanOrEqual(one.w);
+    expect(one.sizePt).toBeGreaterThanOrEqual(30);
+    expect(one.sizePt).toBeGreaterThan(one.w / (title.length * 0.48) - 0.11);
+    /* without the option the same headline is fitted to two lines (the default behaviour stays) */
+    const two = titleOf(md(title, 'title: t'), title);
+    expect(title.length * two.sizePt * 0.48).toBeGreaterThan(two.w);
+  });
+
+  it('keeps a short headline at the layout size and refuses one that needs less than 30pt', () => {
+    expect(titleOf(md('GSC Inspect URL'), 'GSC Inspect URL').sizePt).toBe(SCOPE_TITLE_PT);
+    const long = 'x'.repeat(140);
+    const deck = parseDeck(md(long));
+    expect(() => placeCustomSlide(deck.slides[0]!, deck.meta)).toThrow(/one line \(min 30pt\)/);
+    expect(() => parseDeck(md('t', 'scope-title: two'))).toThrow(/Unknown scope-title/);
   });
 });
 

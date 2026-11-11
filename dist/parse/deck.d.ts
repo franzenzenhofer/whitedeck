@@ -54,6 +54,8 @@ export interface DeckMeta {
     readonly author?: string;
     /** Image painted bottom-right on every slide. */
     readonly logo?: string;
+    /** `scope-title: one-line` - scope-layout headlines are sized to fit ONE line (min 30pt) instead of wrapping. */
+    readonly scopeTitle?: 'one-line';
 }
 export interface Deck {
     readonly meta: DeckMeta;

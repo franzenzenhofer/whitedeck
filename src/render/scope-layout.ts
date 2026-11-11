@@ -15,6 +15,7 @@ import {
   SECTION_LEFT,
   SHOT_FRAME,
   SHOT_NOTES,
+  SHOT_SIDE,
   TITLE_BULLETS_LEFT,
   TITLE_LEFT,
   TOOL_LOGO,
@@ -27,7 +28,7 @@ import {
   type PtText,
 } from '../theme/scope.js';
 import { inlineVisibleText } from '../parse/inline.js';
-import { fittedNotesSizePt, fittedSizePt, notesHeightPt, scaledGapPt } from './fit.js';
+import { AVG_GLYPH_EM, fittedNotesSizePt, fittedSizePt, notesHeightPt, scaledGapPt } from './fit.js';
 import { placeDataSlide } from './data-layout.js';
 import { firstUrl, fitInto, text, type Placed, type PlacedBullets, type PlacedImage, type PlacedText } from './placed.js';
 
@@ -53,13 +54,27 @@ const fittedTitle = (box: PtText, value: string): PlacedText =>
 const logo = (meta: DeckMeta): Placed[] =>
   meta.logo === undefined ? [] : [{ kind: 'image', path: meta.logo, rect: fitInto(meta.logo, LOGO) }];
 
-const header = (slide: DeckSlide): Placed[] => [
+/* scope-title: one-line - the largest size (0.1pt steps, never above the layout size) at which the headline is
+   ONE line by the shared glyph estimate; a headline that would need less than 30pt is a build error, not a wrap. */
+const MIN_ONE_LINE_PT = 30;
+const oneLineTitle = (box: PtText, value: string): PlacedText => {
+  const chars = inlineVisibleText(value).length;
+  const size = Math.min(box.sizePt, Math.floor((box.w / (chars * AVG_GLYPH_EM)) * 10) / 10);
+  if (size < MIN_ONE_LINE_PT) {
+    throw new Error(`headline needs ${size}pt to stay on one line (min ${MIN_ONE_LINE_PT}pt) - shorten it: ${value}`);
+  }
+  return text({ ...box, sizePt: size }, value);
+};
+
+const header = (slide: DeckSlide, meta: DeckMeta): Placed[] => [
   text(SCOPE_TEXT, `**${SCOPE_LABEL}** ${slide.scope ?? ''}`),
   ...(slide.tool === undefined
     ? []
     : [{ kind: 'image', path: slide.tool, rect: fitInto(slide.tool, TOOL_LOGO, true) } as PlacedImage]),
   { kind: 'rect', rect: HEADER_RULE, fill: BLACK },
-  ...(slide.title === undefined ? [] : [fittedTitle(SCOPE_TITLE, slide.title)]),
+  ...(slide.title === undefined
+    ? []
+    : [meta.scopeTitle === 'one-line' ? oneLineTitle(SCOPE_TITLE, slide.title) : fittedTitle(SCOPE_TITLE, slide.title)]),
 ];
 
 const caption = (slide: DeckSlide): Placed[] =>
@@ -120,20 +135,21 @@ const scopeCompare = (slide: DeckSlide): Placed[] => [
   ...notes(compareNotes(slide.images.length), COMPARE.notesSizePt, slide.columns),
 ];
 
-const scopeShotNotes = (slide: DeckSlide): Placed[] => {
+const scopeShotNotes = (slide: DeckSlide, geo: typeof SHOT_NOTES | typeof SHOT_SIDE = SHOT_NOTES): Placed[] => {
   const [main, side] = slide.images;
-  if (main === undefined || side === undefined) throw new Error('scope-shot-notes needs two images');
+  if (main === undefined || side === undefined) throw new Error(`${slide.layout} needs two images`);
   const url = firstUrl(slide.caption) ?? firstUrl(slide.scope);
   return [
-    image(main, SHOT_NOTES.main, url),
-    image(side, SHOT_NOTES.side, url),
-    ...notes(SHOT_NOTES.notes, SHOT_NOTES.notesSizePt, slide.columns),
+    image(main, geo.main, url),
+    image(side, geo.side, url),
+    ...notes(geo.notes, geo.notesSizePt, slide.columns),
   ];
 };
 
 const scopeBody = (slide: DeckSlide): Placed[] => {
   if (slide.layout === 'scope-shot') return scopeShot(slide);
   if (slide.layout === 'scope-compare') return scopeCompare(slide);
+  if (slide.layout === 'scope-shot-side') return scopeShotNotes(slide, SHOT_SIDE);
   return scopeShotNotes(slide);
 };
 
@@ -178,7 +194,7 @@ export const placeCustomSlide = (slide: DeckSlide, meta: DeckMeta): Placed[] => 
   if (!isCustomLayout(slide.layout)) throw new Error(`${slide.layout} is not a custom layout`);
   try {
     if (slide.layout === DATA_LAYOUT_ID) return [...placeDataSlide(slide), ...logo(meta)];
-    if (isScopeLayout(slide.layout)) return [...header(slide), ...scopeBody(slide), ...caption(slide), ...logo(meta)];
+    if (isScopeLayout(slide.layout)) return [...header(slide, meta), ...scopeBody(slide), ...caption(slide), ...logo(meta)];
     return [...leftBody(slide), ...logo(meta)];
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

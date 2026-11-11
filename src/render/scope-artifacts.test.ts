@@ -36,7 +36,7 @@ describe('scope layouts: HTML/PDF through the real Marp', () => {
     await renderHtml(deck, outPath);
     const html = readFileSync(outPath, 'utf8');
     expect(html.match(/<img /g)?.length).toBe(expectedImages);
-    expect(html.match(/outline:9px solid #ee220c/g)?.length).toBe(3);
+    expect(html.match(/outline:9px solid #ee220c/g)?.length).toBe(5);
     expect(html).toContain('outline:9px solid #1db100');
     expect(html.match(/background:#00a1ff/g)?.length).toBe(2);
     expect(html).toContain('>JS off<');
@@ -98,7 +98,7 @@ describe('scope layouts: editable pptx', () => {
     expect(pics).toBe(expectedImages);
     const all = slides.join('');
     // 7pt border = 88900 EMU
-    expect(all.match(/<a:ln w="88900"/g)?.length).toBe(4);
+    expect(all.match(/<a:ln w="88900"/g)?.length).toBe(6);
     expect(all).toContain('<a:srgbClr val="00A1FF"/>');
     expect(all).toContain('<a:srgbClr val="1DB100"/>');
     expect(all.match(/ b="1"/g)?.length ?? 0).toBeGreaterThanOrEqual(8);
@@ -137,7 +137,7 @@ describe.skipIf(!onMacWithKeynote)('scope layouts: native Keynote', () => {
     /* Imported from the pptx: bars, borders and the rule are shapes, so only
        real pictures count - slide 4: tool logo + shot + deck logo, slide 5:
        tool logo + 3 shots + deck logo, slide 6: tool logo + 2 shots + deck logo. */
-    expect((images ?? '').split('|').map(Number)).toEqual([1, 1, 1, 3, 5, 4, 1]);
+    expect((images ?? '').split('|').map(Number)).toEqual([1, 1, 1, 3, 5, 4, 4, 1]);
     expect(hdr).toContain('SCOPE:');
   });
 });

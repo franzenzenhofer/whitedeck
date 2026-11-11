@@ -20,6 +20,7 @@ export const VIRTUAL_LAYOUTS: Readonly<Record<string, string>> = {
   'scope-compare': 'title-top',
   'scope-shot-notes': 'title-top',
   'data': 'title-top',
+  'scope-shot-side': 'title-top',
 };
 
 export const ALL_LAYOUT_IDS: readonly string[] = [...LAYOUT_IDS, ...Object.keys(VIRTUAL_LAYOUTS)];

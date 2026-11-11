@@ -1,6 +1,6 @@
-import { BLACK, CAPTION, COMPARE, DATA_LAYOUT_ID, HEADER_RULE, LABEL_BLUE, LABEL_TEXT, LOGO, NOTES, SCOPE_LABEL, SCOPE_TEXT, SCOPE_TITLE, SECTION_LEFT, SHOT_FRAME, SHOT_NOTES, TITLE_BULLETS_LEFT, TITLE_LEFT, TOOL_LOGO, compareColumn, compareLabelBar, compareNotes, isCustomLayout, isScopeLayout, } from '../theme/scope.js';
+import { BLACK, CAPTION, COMPARE, DATA_LAYOUT_ID, HEADER_RULE, LABEL_BLUE, LABEL_TEXT, LOGO, NOTES, SCOPE_LABEL, SCOPE_TEXT, SCOPE_TITLE, SECTION_LEFT, SHOT_FRAME, SHOT_NOTES, SHOT_SIDE, TITLE_BULLETS_LEFT, TITLE_LEFT, TOOL_LOGO, compareColumn, compareLabelBar, compareNotes, isCustomLayout, isScopeLayout, } from '../theme/scope.js';
 import { inlineVisibleText } from '../parse/inline.js';
-import { fittedNotesSizePt, fittedSizePt, notesHeightPt, scaledGapPt } from './fit.js';
+import { AVG_GLYPH_EM, fittedNotesSizePt, fittedSizePt, notesHeightPt, scaledGapPt } from './fit.js';
 import { placeDataSlide } from './data-layout.js';
 import { firstUrl, fitInto, text } from './placed.js';
 const image = (img, frame, url) => ({
@@ -15,13 +15,26 @@ const image = (img, frame, url) => ({
 const MIN_TITLE_PT = 40;
 const fittedTitle = (box, value) => text({ ...box, sizePt: fittedSizePt(inlineVisibleText(value), { widthPt: box.w, heightPt: box.h, sizePt: box.sizePt, minPt: MIN_TITLE_PT }) }, value);
 const logo = (meta) => meta.logo === undefined ? [] : [{ kind: 'image', path: meta.logo, rect: fitInto(meta.logo, LOGO) }];
-const header = (slide) => [
+/* scope-title: one-line - the largest size (0.1pt steps, never above the layout size) at which the headline is
+   ONE line by the shared glyph estimate; a headline that would need less than 30pt is a build error, not a wrap. */
+const MIN_ONE_LINE_PT = 30;
+const oneLineTitle = (box, value) => {
+    const chars = inlineVisibleText(value).length;
+    const size = Math.min(box.sizePt, Math.floor((box.w / (chars * AVG_GLYPH_EM)) * 10) / 10);
+    if (size < MIN_ONE_LINE_PT) {
+        throw new Error(`headline needs ${size}pt to stay on one line (min ${MIN_ONE_LINE_PT}pt) - shorten it: ${value}`);
+    }
+    return text({ ...box, sizePt: size }, value);
+};
+const header = (slide, meta) => [
     text(SCOPE_TEXT, `**${SCOPE_LABEL}** ${slide.scope ?? ''}`),
     ...(slide.tool === undefined
         ? []
         : [{ kind: 'image', path: slide.tool, rect: fitInto(slide.tool, TOOL_LOGO, true) }]),
     { kind: 'rect', rect: HEADER_RULE, fill: BLACK },
-    ...(slide.title === undefined ? [] : [fittedTitle(SCOPE_TITLE, slide.title)]),
+    ...(slide.title === undefined
+        ? []
+        : [meta.scopeTitle === 'one-line' ? oneLineTitle(SCOPE_TITLE, slide.title) : fittedTitle(SCOPE_TITLE, slide.title)]),
 ];
 const caption = (slide) => slide.caption === undefined ? [] : [text(CAPTION, slide.caption)];
 /* One label bar per run of consecutive images sharing a label - "JS on" over
@@ -71,15 +84,15 @@ const scopeCompare = (slide) => [
     ...slide.images.map((img, index) => image(img, compareColumn(index), firstUrl(slide.scope))),
     ...notes(compareNotes(slide.images.length), COMPARE.notesSizePt, slide.columns),
 ];
-const scopeShotNotes = (slide) => {
+const scopeShotNotes = (slide, geo = SHOT_NOTES) => {
     const [main, side] = slide.images;
     if (main === undefined || side === undefined)
-        throw new Error('scope-shot-notes needs two images');
+        throw new Error(`${slide.layout} needs two images`);
     const url = firstUrl(slide.caption) ?? firstUrl(slide.scope);
     return [
-        image(main, SHOT_NOTES.main, url),
-        image(side, SHOT_NOTES.side, url),
-        ...notes(SHOT_NOTES.notes, SHOT_NOTES.notesSizePt, slide.columns),
+        image(main, geo.main, url),
+        image(side, geo.side, url),
+        ...notes(geo.notes, geo.notesSizePt, slide.columns),
     ];
 };
 const scopeBody = (slide) => {
@@ -87,6 +100,8 @@ const scopeBody = (slide) => {
         return scopeShot(slide);
     if (slide.layout === 'scope-compare')
         return scopeCompare(slide);
+    if (slide.layout === 'scope-shot-side')
+        return scopeShotNotes(slide, SHOT_SIDE);
     return scopeShotNotes(slide);
 };
 const titleLeft = (slide) => [
@@ -131,7 +146,7 @@ export const placeCustomSlide = (slide, meta) => {
         if (slide.layout === DATA_LAYOUT_ID)
             return [...placeDataSlide(slide), ...logo(meta)];
         if (isScopeLayout(slide.layout))
-            return [...header(slide), ...scopeBody(slide), ...caption(slide), ...logo(meta)];
+            return [...header(slide, meta), ...scopeBody(slide), ...caption(slide), ...logo(meta)];
         return [...leftBody(slide), ...logo(meta)];
     }
     catch (error) {

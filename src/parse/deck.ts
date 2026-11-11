@@ -64,6 +64,8 @@ export interface DeckMeta {
   readonly author?: string;
   /** Image painted bottom-right on every slide. */
   readonly logo?: string;
+  /** `scope-title: one-line` - scope-layout headlines are sized to fit ONE line (min 30pt) instead of wrapping. */
+  readonly scopeTitle?: 'one-line';
 }
 
 export interface Deck {
@@ -260,7 +262,9 @@ const checkScope = (layout: string, slide: MutableSlide): void => {
   if (slide.scope === undefined) throw new Error(`${layout} needs a "Scope:" line`);
   if (slide.images.length === 0) throw new Error(`${layout} needs at least one image`);
   if (layout === 'scope-shot' && slide.images.length !== 1) throw new Error('scope-shot takes exactly one image');
-  if (layout === 'scope-shot-notes' && slide.images.length !== 2) throw new Error('scope-shot-notes takes exactly two images (main, side)');
+  if ((layout === 'scope-shot-notes' || layout === 'scope-shot-side') && slide.images.length !== 2) {
+    throw new Error(`${layout} takes exactly two images (main, side)`);
+  }
   if (layout === 'scope-compare' && slide.images.some((i) => i.label === undefined)) {
     throw new Error('scope-compare: every image needs a label="..." attribute');
   }
@@ -290,7 +294,7 @@ const checkData = (layout: string, slide: MutableSlide): void => {
 
 /** Layouts whose bullets are grouped under bold headings (`- **IS**` then plain bullets). */
 const usesColumns = (layout: string): boolean =>
-  layout === 'compare' || layout === 'scope-compare' || layout === 'scope-shot-notes';
+  layout === 'compare' || layout === 'scope-compare' || layout === 'scope-shot-notes' || layout === 'scope-shot-side';
 
 const finalizeSlide = (slide: MutableSlide, isFirst: boolean): DeckSlide => {
   const layout = slide.layout ?? inferLayout(slide, isFirst);
@@ -342,6 +346,10 @@ export const parseDeck = (markdown: string): Deck => {
     ...(typeof data['title'] === 'string' && { title: data['title'] }),
     ...(typeof data['author'] === 'string' && { author: data['author'] }),
     ...(typeof data['logo'] === 'string' && { logo: data['logo'] }),
+    ...(data['scope-title'] === 'one-line' && { scopeTitle: 'one-line' as const }),
   };
+  if (data['scope-title'] !== undefined && data['scope-title'] !== 'one-line') {
+    throw new Error(`Unknown scope-title "${String(data['scope-title'])}". Use: one-line`);
+  }
   return { meta, slides };
 };
