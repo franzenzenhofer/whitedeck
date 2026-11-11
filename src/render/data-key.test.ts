@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdirSync, mkdtempSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -126,8 +126,7 @@ describe.skipIf(!onMacWithKeynote)('data slides in Keynote: every text is a nati
     mkdirSync(hidden, { recursive: true });
     await renderKey(deck, join(hidden, 'data.key'));
     expect(existsSync(join(hidden, 'data.key'))).toBe(true);
-    const keyPath = join(base, 'data.key');
-    cpSync(join(hidden, 'data.key'), keyPath, { recursive: true });
+    const keyPath = join(hidden, 'data.key');
     const dump = await runAppleScript(objectsScript(keyPath));
     objects = dump.split(RECORD).map((record) => {
       const [slide, kind, text] = record.split(FIELD);

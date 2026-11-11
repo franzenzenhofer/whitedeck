@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { parseDeck } from '../parse/deck.js';
 import { renderHtml } from './html.js';
 import { findKeynoteApp } from './key-app.js';
-import { renderKey, runAppleScript } from './key.js';
+import { openDocumentLines, renderKey, runAppleScript } from './key.js';
 import { renderPdf } from './pdf.js';
 import { renderPptx } from './pptx.js';
 
@@ -109,29 +109,30 @@ describe('scope layouts: editable pptx', () => {
 
 const onMacWithKeynote = (await findKeynoteApp(process.platform)) !== undefined;
 
-const COUNT_SCRIPT = `
-on run argv
-  tell application id "com.apple.Keynote"
-    set d to open (POSIX file (item 1 of argv))
-    set n to count of slides of d
-    set imgs to {}
-    repeat with s in slides of d
-      set end of imgs to (count of images of s)
-    end repeat
-    set hdr to object text of text item 1 of slide 5 of d
-    close d saving no
-    if (count of documents) is 0 then quit
-  end tell
-  set AppleScript's text item delimiters to "|"
-  return (n as text) & "§" & (imgs as text) & "§" & hdr
-end run
-`;
+/* Opens the saved .key through the same helper the build uses: `open` returns no
+   reliable document (-1700 "missing value"), and the front document may be another job's. */
+const countScript = (keyPath: string): string =>
+  [
+    'tell application id "com.apple.Keynote"',
+    ...openDocumentLines(keyPath),
+    '    set n to count of slides of d',
+    '    set imgs to {}',
+    '    repeat with s in slides of d',
+    '      set end of imgs to (count of images of s)',
+    '    end repeat',
+    '    set hdr to object text of text item 1 of slide 5 of d',
+    '    close d saving no',
+    '    if (count of documents) is 0 then quit',
+    'end tell',
+    'set AppleScript\'s text item delimiters to "|"',
+    'return (n as text) & "§" & (imgs as text) & "§" & hdr',
+  ].join('\n');
 
 describe.skipIf(!onMacWithKeynote)('scope layouts: native Keynote', () => {
   it('imports the pptx so links, bold runs, bars and borders survive as native objects', async () => {
     const outPath = join(outDir, 'scope.key');
     await renderKey(deck, outPath);
-    const [count, images, hdr] = (await runAppleScript(COUNT_SCRIPT, [outPath])).split('§');
+    const [count, images, hdr] = (await runAppleScript(countScript(outPath))).split('§');
     expect(count).toBe(String(deck.slides.length));
     /* Imported from the pptx: bars, borders and the rule are shapes, so only
        real pictures count - slide 4: tool logo + shot + deck logo, slide 5:
