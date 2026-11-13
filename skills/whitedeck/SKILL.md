@@ -34,10 +34,13 @@ always at the same positions:
    Search Console, Google Analytics, Google Search, Google Discover, Google News, AI Overviews,
    CrUX / PageSpeed Insights ... Logo logic exactly as in the Bergwelten / Speedweek decks
    (one official logo per source, never a text-only label when a logo exists).
-4. **Optional context line** (small, under the headline row): date from-to, what is compared to
-   what ("Oct 2026 vs Oct 2025, same weekdays"), the traffic-loss frame if needed.
-5. **Conclusion line under the headline, always** - the finding in one sentence, e.g.
-   "40 % of sessions (1.2M of 3.0M) came from Google organic". This is where the assertion goes.
+4. **Context line** (under the headline row): date from-to, what is compared to
+   what ("Oct 2026 vs Oct 2025, same weekdays"), the traffic-loss frame if needed. NEVER small (Franz, 13 Nov 2026:
+   "never make the second line so small, it is a super important line"): in the .key at least 30 pt (headline 40).
+5. **Conclusion under the headline, always** - the finding. NOT forced into one sentence (Franz, 13 Nov 2026: "I hate your stupid
+   conclusion line - the conclusion could also be multiple lines, a table and so on"). Use whatever reads best: one sentence
+   ("40 % of sessions (1.2M of 3.0M) came from Google organic"), 2-3 short lines (e.g. one red IS line + one green SHOULD line),
+   a small table, or a short list. Never cram IS and SHOULD into one long run-on line with ";".
 6. Then the evidence (chart / table / screenshot) and the source line.
 
 **Build every data / analysis slide with the `data` layout** (section "Data slides" below): it
