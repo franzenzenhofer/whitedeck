@@ -33,9 +33,13 @@ export declare const DATA_LOGO: {
     readonly labelColor: "#5e5e5e";
     readonly glyphEm: 0.56;
 };
-/** Context line: 30pt and never shrunk (Franz, 13 + 17 Nov 2026: "far too small"); one line, about 115 characters. */
+/** Context line: 36pt dark grey #333, never shrunk (Franz, 13 + 17 Nov 2026 and W11 QA: "MUCH bigger", the second most
+    important line). One line of this box; a second line moves conclusion and evidence down by DATA_CONTEXT_LINE_PT,
+    a third line is a build error. */
 export declare const DATA_CONTEXT: PtText;
-export declare const DATA_CONTEXT_MIN_PT = 30;
+export declare const DATA_CONTEXT_MIN_PT = 36;
+export declare const DATA_CONTEXT_LINE_PT = 42;
+export declare const DATA_CONTEXT_MAX_LINES = 2;
 export declare const DATA_CONCLUSION: PtText;
 export declare const DATA_CONCLUSION_MIN_PT = 24;
 /** Evidence band: images, table, or bullets. */
@@ -43,14 +47,24 @@ export declare const DATA_BODY: PtRect;
 export declare const DATA_IMAGE_GAP = 36;
 export declare const DATA_TABLE: {
     readonly sizePt: 24;
-    readonly minPt: 16;
+    readonly minPt: 24;
     readonly rowEm: 1.9;
-    readonly padPt: 10;
+    readonly lineEm: 1.15;
+    readonly padLeftPt: 24;
+    readonly padRightPt: 12;
     readonly gapAbove: 24;
+    readonly glyphEm: 0.54;
     readonly headerFill: "#f2f2f2";
     readonly border: "#c8c8c8";
     readonly borderPt: 1;
     readonly color: "#000000";
+    readonly is: "#c5221f";
+    readonly should: "#188038";
+};
+/** A portrait screenshot with a table: picture left at full band height, table right (IS24 d07 p17 - p19). */
+export declare const DATA_SIDE: {
+    readonly tableFrac: 0.35;
+    readonly gap: 36;
 };
 /** Change values in tables: red / green, grey below this many % or pp (Google palette). */
 export declare const DATA_CHANGE: {

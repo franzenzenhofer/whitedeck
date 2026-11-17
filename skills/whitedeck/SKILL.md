@@ -209,9 +209,9 @@ A slide with any of `Tags:` / `Logos:` / `Context:` / `Conclusion:` or a table b
 | headline (what is shown, or the question) | `# ...` | text box, 56pt, shrinks on one line to 40pt, then 2 lines |
 | tags (time window, YoY) | `Tags: 28 days \| YoY` | rounded shape + text (Keynote: a group, double-click edits the text), right of the headline |
 | source logos | `Logos: gsc \| search \| path/x.png "Label"` | picture + label as text box (icons) |
-| context line (optional) | `Context: ...` | grey text box under the headline row, 30pt, never shrunk: one line of about 115 characters, longer is a build error |
+| context line (optional) | `Context: ...` | dark grey (#333) text box under the headline row, 36pt, never shrunk: one or two lines (the second moves conclusion and evidence down), three lines are a build error |
 | conclusion (required) | `Conclusion: ...`, may lead with the answer word: `Conclusion: **[YES]{#188038}**: 4,619 clicks a day (-39.5 %) below the prediction` | text box under the context line |
-| evidence | 1-3 `![](chart.png)` side by side, a `\| table \|`, images over a table, OR max 5 bullets | pictures / native table / text |
+| evidence | 1-3 `![](chart.png)` side by side, a `\| table \|`, images over a table (portrait screenshots: left of the table), OR max 5 bullets | pictures / native table (24pt floor, text cells wrap inside the row, IS red / SHOULD green, answer words bold) / text |
 | source line | `Source: [..](url)` | text box at the bottom, the chart links to its first URL |
 | presenter notes | `Notes: ...` (any layout) | Keynote presenter notes |
 

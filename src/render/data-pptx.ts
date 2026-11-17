@@ -58,7 +58,6 @@ const cell = (value: string, align: TableCell['options']['align'], style: Partia
 });
 
 export const paintTable = (slide: DataSlideTarget, p: PlacedTable): void => {
-  const pad = inch(p.padPt);
   const headerStyle = { bold: true, fill: { color: hex(p.headerFill) } };
   const rows = [p.header, ...p.rows].map((row, index) =>
     row.map((value, col) => cell(value, p.align[col] ?? 'left', index === 0 ? headerStyle : {})),
@@ -69,12 +68,12 @@ export const paintTable = (slide: DataSlideTarget, p: PlacedTable): void => {
     w: inch(p.rect.w),
     h: inch(p.rect.h),
     colW: p.colW.map(inch),
-    rowH: rows.map(() => inch(p.rowH)),
+    rowH: p.rowHs.map(inch),
     fontFace: 'Helvetica Neue',
     fontSize: p.sizePt,
     color: hex(p.color),
     valign: 'middle',
-    margin: [0, pad, 0, pad],
+    margin: [0, inch(p.padRightPt), 0, inch(p.padLeftPt)],
     border: { type: 'solid', pt: p.borderPt, color: hex(p.border) },
   });
 };

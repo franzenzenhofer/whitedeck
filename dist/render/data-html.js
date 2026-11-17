@@ -10,15 +10,18 @@ export const pillHtml = (p) => {
         `font-weight:${FONT_WEIGHT[b.font]};display:flex;align-items:center;justify-content:center;white-space:nowrap;line-height:1;`;
     return `<div class="wd-text wd-pill" style="${style}">${inlineToHtml(p.text)}</div>`;
 };
-const cellHtml = (tag, value, p, col) => {
-    const style = `width:${ptToPx(p.colW[col] ?? 0)}px;height:${ptToPx(p.rowH)}px;padding:0 ${p.padPt}pt;text-align:${p.align[col] ?? 'left'};` +
-        `border:${p.borderPt}pt solid ${p.border};white-space:nowrap;box-sizing:border-box;` +
+const cellHtml = (tag, value, p, at) => {
+    const { col, rowH } = at;
+    const style = `width:${ptToPx(p.colW[col] ?? 0)}px;height:${ptToPx(rowH)}px;padding:0 ${p.padRightPt}pt 0 ${p.padLeftPt}pt;` +
+        `text-align:${p.align[col] ?? 'left'};border:${p.borderPt}pt solid ${p.border};white-space:normal;box-sizing:border-box;` +
         (tag === 'th' ? `background:${p.headerFill};font-weight:700;` : 'font-weight:400;');
     return `<${tag} style="${style}">${inlineToHtml(value)}</${tag}>`;
 };
 export const tableHtml = (p) => {
-    const head = `<tr>${p.header.map((v, col) => cellHtml('th', v, p, col)).join('')}</tr>`;
-    const body = p.rows.map((row) => `<tr>${row.map((v, col) => cellHtml('td', v, p, col)).join('')}</tr>`).join('');
+    const head = `<tr>${p.header.map((v, col) => cellHtml('th', v, p, { col, rowH: p.rowHs[0] ?? 0 })).join('')}</tr>`;
+    const body = p.rows
+        .map((row, r) => `<tr>${row.map((v, col) => cellHtml('td', v, p, { col, rowH: p.rowHs[r + 1] ?? 0 })).join('')}</tr>`)
+        .join('');
     const style = `position:absolute;left:${ptToPx(p.rect.x)}px;top:${ptToPx(p.rect.y)}px;width:${ptToPx(p.rect.w)}px;` +
         `border-collapse:collapse;table-layout:fixed;font-size:${p.sizePt}pt;color:${p.color};line-height:1.15;`;
     return `<table class="wd-text wd-table" style="${style}"><thead>${head}</thead><tbody>${body}</tbody></table>`;

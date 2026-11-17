@@ -42,27 +42,36 @@ export const DATA_LOGO = {
   wordmarkH: 42, stackedH: 64, stackedAspect: 3, iconH: 46, labelSizePt: 24, labelGap: 10, labelColor: CAPTION_GREY, glyphEm: 0.56,
 } as const;
 
-/** Context line: 30pt and never shrunk (Franz, 13 + 17 Nov 2026: "far too small"); one line, about 115 characters. */
+/** Context line: 36pt dark grey #333, never shrunk (Franz, 13 + 17 Nov 2026 and W11 QA: "MUCH bigger", the second most
+    important line). One line of this box; a second line moves conclusion and evidence down by DATA_CONTEXT_LINE_PT,
+    a third line is a build error. */
 export const DATA_CONTEXT: PtText = {
-  x: MARGIN_PT, y: 140, w: CONTENT_W, h: 46, sizePt: 30, font: 'light', color: CAPTION_GREY, align: 'left', vAlign: 'middle',
+  x: MARGIN_PT, y: 140, w: CONTENT_W, h: 42, sizePt: 36, font: 'regular', color: '#333333', align: 'left', vAlign: 'top',
 };
-export const DATA_CONTEXT_MIN_PT = 30;
+export const DATA_CONTEXT_MIN_PT = 36;
+export const DATA_CONTEXT_LINE_PT = 42;
+export const DATA_CONTEXT_MAX_LINES = 2;
 
-/* Conclusion and evidence sit 10pt lower than with the old 24pt / 36pt-high context box; the evidence band
-   still ends at 988pt, above the source line. */
+/* Positions with a one-line context; a two-line context shifts both down by DATA_CONTEXT_LINE_PT. The evidence band
+   always ends at 988pt, above the source line. */
 export const DATA_CONCLUSION: PtText = {
-  x: MARGIN_PT, y: 194, w: CONTENT_W, h: 86, sizePt: 34, font: 'regular', color: TEXT_GREY, align: 'left', vAlign: 'top',
+  x: MARGIN_PT, y: 190, w: CONTENT_W, h: 86, sizePt: 34, font: 'regular', color: TEXT_GREY, align: 'left', vAlign: 'top',
 };
 export const DATA_CONCLUSION_MIN_PT = 24;
 
 /** Evidence band: images, table, or bullets. */
-export const DATA_BODY: PtRect = { x: MARGIN_PT, y: 298, w: CONTENT_W, h: 690 };
+export const DATA_BODY: PtRect = { x: MARGIN_PT, y: 294, w: CONTENT_W, h: 694 };
 export const DATA_IMAGE_GAP = 36;
 
+/* Tables: 24pt floor (the pptx floor of the decks), cells wrap inside their row (the row grows), number columns never
+   wrap, 24pt left padding (no "1,373 msYES" collisions after a right-aligned column), IS red / SHOULD green. */
 export const DATA_TABLE = {
-  sizePt: 24, minPt: 16, rowEm: 1.9, padPt: 10, gapAbove: 24,
-  headerFill: '#f2f2f2', border: '#c8c8c8', borderPt: 1, color: BLACK,
+  sizePt: 24, minPt: 24, rowEm: 1.9, lineEm: 1.15, padLeftPt: 24, padRightPt: 12, gapAbove: 24, glyphEm: 0.54,
+  headerFill: '#f2f2f2', border: '#c8c8c8', borderPt: 1, color: BLACK, is: '#c5221f', should: '#188038',
 } as const;
+
+/** A portrait screenshot with a table: picture left at full band height, table right (IS24 d07 p17 - p19). */
+export const DATA_SIDE = { tableFrac: 0.35, gap: 36 } as const;
 
 /** Change values in tables: red / green, grey below this many % or pp (Google palette). */
 export const DATA_CHANGE = { negative: '#d93025', positive: '#188038', same: '#80868b', sameBelow: 1 } as const;

@@ -136,38 +136,39 @@ describe('data layout tables: P5, both sides of the threshold', () => {
     const wide = tableDeck(2, 'a'.repeat(400)).slides[0];
     if (tall === undefined || wide === undefined) throw new Error('no slide');
     expect(() => placeCustomSlide(tall, {})).toThrow(/split it over two slides/);
-    expect(() => placeCustomSlide(wide, {})).toThrow(/does not fit its column even at 16pt/);
+    expect(() => placeCustomSlide(wide, {})).toThrow(/table columns do not fit .* at 24pt/);
   });
 });
 
-/* Franz, 13 Nov 2026 + 17 Nov 2026: the context line under the headline is never small - 30pt or larger
-   in every format, never shrunk; a context that does not fit one 30pt line is a build error. */
-describe('data layout context line: 30pt, never shrunk', () => {
+/* Franz, 13 + 17 Nov 2026 (W11 QA: "MUCH bigger"): the context line under the headline is 36pt dark grey (#333) in
+   every format, never shrunk; it may take two lines (the conclusion moves down), three lines are a build error. */
+describe('data layout context line: 36pt #333, never shrunk', () => {
   const contextDeck = (context: string) =>
     parseDeck(['# GSC: clicks a day, 2026', `Context: ${context}`, 'Conclusion: YES: 4,619 clicks a day (-39.5 %) below the prediction'].join('\n'));
 
-  it('paints the context as a 30pt text run in the pptx', async () => {
+  it('paints the context as a 36pt #333 text run in the pptx', async () => {
     for (const { slide, n } of dataSlides()) {
       if (slide.context === undefined) continue;
       const shape = [...(await slideXml(n)).matchAll(/<p:sp>[\s\S]*?<\/p:sp>/g)].find((m) => m[0].includes(`<a:t>${slide.context}</a:t>`));
       const sizes = [...(shape?.[0] ?? '').matchAll(/ sz="(\d+)"/g)].map((s) => Number(s[1]));
       expect(sizes.length, `slide ${n}: context run has no size`).toBeGreaterThan(0);
-      for (const sz of sizes) expect(sz).toBeGreaterThanOrEqual(3000);
+      for (const sz of sizes) expect(sz).toBeGreaterThanOrEqual(3600);
+      expect(shape?.[0]).toContain('333333');
     }
   });
 
-  it('places a 115-character context at 30pt, with the conclusion below it', () => {
+  it('places a 115-character context at 36pt on two lines, with the conclusion below it', () => {
     const slide = contextDeck('x'.repeat(115)).slides[0];
     if (slide === undefined) throw new Error('no slide');
     const texts = placeCustomSlide(slide, {}).flatMap((p) => (p.kind === 'text' ? [p] : []));
     const context = texts.find((p) => p.text === 'x'.repeat(115));
     const conclusion = texts.find((p) => p.text.startsWith('YES:'));
-    expect(context?.box.sizePt).toBe(30);
+    expect(context?.box.sizePt).toBe(36);
     expect((conclusion?.box.y ?? 0) >= (context?.box.y ?? 0) + (context?.box.h ?? 0)).toBe(true);
   });
 
-  it('fails a context too long for one 30pt line instead of shrinking it', () => {
-    const slide = contextDeck('x'.repeat(200)).slides[0];
+  it('fails a context too long for two 36pt lines instead of shrinking it', () => {
+    const slide = contextDeck('x'.repeat(260)).slides[0];
     if (slide === undefined) throw new Error('no slide');
     expect(() => placeCustomSlide(slide, {})).toThrow(/context line .* does not fit/);
   });

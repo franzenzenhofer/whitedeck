@@ -55,12 +55,14 @@ export interface PlacedTable {
   readonly kind: 'table';
   readonly rect: PtRect;
   readonly sizePt: number;
-  readonly rowH: number;
+  /** Row heights in pt, header first: a wrapped cell grows its row. */
+  readonly rowHs: readonly number[];
   readonly colW: readonly number[];
   readonly header: readonly string[];
   readonly rows: readonly (readonly string[])[];
   readonly align: readonly CellAlign[];
-  readonly padPt: number;
+  readonly padLeftPt: number;
+  readonly padRightPt: number;
   readonly headerFill: string;
   readonly border: string;
   readonly borderPt: number;

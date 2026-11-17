@@ -2,27 +2,26 @@ import type { DeckLogo, DeckSlide } from '../parse/deck.js';
 import { inlineVisibleText } from '../parse/inline.js';
 import {
   DATA_BODY,
-  DATA_BULLETS,
   DATA_CLUSTER,
   DATA_CONCLUSION,
   DATA_CONCLUSION_MIN_PT,
   DATA_CONTEXT,
+  DATA_CONTEXT_LINE_PT,
+  DATA_CONTEXT_MAX_LINES,
   DATA_CONTEXT_MIN_PT,
   DATA_HEADLINE,
   DATA_HEADLINE_GLYPH_EM,
   DATA_HEADLINE_MIN_PT,
   DATA_HEADLINE_ONE_LINE_MIN_PT,
   DATA_HEADLINE_MIN_W,
-  DATA_IMAGE_GAP,
   DATA_LOGO,
   DATA_PILL,
   DATA_SOURCE,
-  DATA_TABLE,
 } from '../theme/data.js';
-import { BLACK, type PtRect, type PtText } from '../theme/scope.js';
-import { fittedTableSizePt, placeTable, tableHeightPt } from './data-table.js';
-import { fittedNotesSizePt, fittedSizePt, notesHeightPt, textHeightPt } from './fit.js';
-import { firstUrl, fitInto, requireImageSize, text, type Placed, type PlacedBullets, type PlacedImage } from './placed.js';
+import type { PtText } from '../theme/scope.js';
+import { evidence } from './data-evidence.js';
+import { fittedSizePt, LINE_HEIGHT_EM, textHeightPt } from './fit.js';
+import { requireImageSize, text, type Placed, type PlacedImage } from './placed.js';
 
 /* The data slide, placed once for every painter. Header row: headline left, tag pills
    and source logos right-aligned on the headline's centre line; context and conclusion
@@ -114,74 +113,40 @@ const headline = (slide: DeckSlide, clusterLeft: number): Placed => {
   for (let size = DATA_HEADLINE.sizePt; size >= DATA_HEADLINE_ONE_LINE_MIN_PT; size -= 2) {
     if (chars * size * DATA_HEADLINE_GLYPH_EM <= w) return text({ ...DATA_HEADLINE, w, sizePt: size }, value);
   }
-  const twoLines = { ...DATA_HEADLINE, w, sizePt: DATA_HEADLINE_ONE_LINE_MIN_PT };
-  return text(fitText(twoLines, value, DATA_HEADLINE_MIN_PT, 'headline'), value);
-};
-
-/** 1-3 pictures side by side, each contain-fit in its share of `frame`, linked to the source. */
-const images = (slide: DeckSlide, frame: PtRect): PlacedImage[] => {
-  const n = slide.images.length;
-  const w = (frame.w - DATA_IMAGE_GAP * (n - 1)) / n;
-  const url = firstUrl(slide.source);
-  return slide.images.map((img, index) => ({
-    kind: 'image',
-    path: img.path,
-    rect: fitInto(img.path, { x: frame.x + index * (w + DATA_IMAGE_GAP), y: frame.y, w, h: frame.h }),
-    ...(img.border !== undefined && { border: img.border }),
-    ...(url !== undefined && { url }),
-  }));
-};
-
-const MIN_IMAGE_H = 200;
-
-/** Pictures over a table: the table takes the height it needs, the pictures the rest. */
-const imagesOverTable = (slide: DeckSlide): Placed[] => {
-  const table = slide.table;
-  if (table === undefined) return images(slide, DATA_BODY);
-  const room = DATA_BODY.h - MIN_IMAGE_H - DATA_TABLE.gapAbove;
-  const sizePt = fittedTableSizePt(table, DATA_BODY.w, slide.images.length === 0 ? DATA_BODY.h : room);
-  if (slide.images.length === 0) return [placeTable(table, DATA_BODY, sizePt)];
-  const frame = { ...DATA_BODY, h: DATA_BODY.h - tableHeightPt(table, sizePt) - DATA_TABLE.gapAbove };
-  const pictures = images(slide, frame);
-  const bottom = Math.max(...pictures.map((p) => p.rect.y + p.rect.h));
-  return [...pictures, placeTable(table, { ...DATA_BODY, y: bottom + DATA_TABLE.gapAbove }, sizePt)];
-};
-
-const bullets = (slide: DeckSlide): PlacedBullets => {
-  const groups = slide.bullets.map((b) => ({ header: inlineVisibleText(b.text), lines: [] }));
-  const widthPt = DATA_BODY.w - DATA_BULLETS.indentPt;
-  const box = { widthPt, heightPt: DATA_BODY.h, sizePt: DATA_BULLETS.sizePt, minPt: DATA_BULLETS.minPt };
-  const sizePt = fittedNotesSizePt(groups, box, DATA_BULLETS.spaceBeforePt);
-  const gap = (DATA_BULLETS.spaceBeforePt * sizePt) / DATA_BULLETS.sizePt;
-  if (notesHeightPt(groups, widthPt, sizePt, gap) > DATA_BODY.h) {
-    throw new Error(`${slide.bullets.length} bullets do not fit the data slide even at ${DATA_BULLETS.minPt}pt - max 5 short bullets`);
+  /* Two lines, measured with the same wide glyph as the one-line check: Keynote must never wrap it to a third line
+     (W11 QA 17 Nov 2026: three-line headlines overlapped the context line). */
+  for (let size = DATA_HEADLINE_ONE_LINE_MIN_PT; size >= DATA_HEADLINE_MIN_PT; size -= 2) {
+    const lines = Math.ceil((chars * size * DATA_HEADLINE_GLYPH_EM) / w);
+    if (lines <= 2 && lines * size * LINE_HEIGHT_EM <= DATA_HEADLINE.h) return text({ ...DATA_HEADLINE, w, sizePt: size }, value);
   }
-  return {
-    kind: 'bullets',
-    box: { ...DATA_BODY, sizePt, font: 'regular', color: BLACK, align: 'left', vAlign: 'top' },
-    bullets: slide.bullets,
-    spaceBeforePt: gap,
-    indentPt: DATA_BULLETS.indentPt,
-    bulletSizePct: DATA_BULLETS.bulletSizePct,
-  };
+  throw new Error(`headline "${inlineVisibleText(value)}" needs more than 2 lines even at ${DATA_HEADLINE_MIN_PT}pt - shorten it`);
 };
 
-const evidence = (slide: DeckSlide): Placed[] => {
-  if (slide.bullets.length > 0) return [bullets(slide)];
-  if (slide.images.length === 0 && slide.table === undefined) return [];
-  return imagesOverTable(slide);
+/* Context line: never shrunk; one or two lines measured with a wide glyph so Keynote never needs a third. */
+const CONTEXT_GLYPH_EM = 0.52;
+
+const contextLines = (value: string): number => {
+  const chars = inlineVisibleText(value).length;
+  const lines = Math.max(1, Math.ceil((chars * DATA_CONTEXT.sizePt * CONTEXT_GLYPH_EM) / DATA_CONTEXT.w));
+  if (lines > DATA_CONTEXT_MAX_LINES) {
+    throw new Error(`context line "${inlineVisibleText(value)}" does not fit ${DATA_CONTEXT_MAX_LINES} lines at ${DATA_CONTEXT_MIN_PT}pt - shorten it`);
+  }
+  return lines;
 };
 
 /** Paint list of a data slide (without the deck logo). */
 export const placeDataSlide = (slide: DeckSlide): Placed[] => {
   const row = cluster(slide);
   const conclusion = slide.conclusion ?? '';
+  const lines = slide.context === undefined ? 1 : contextLines(slide.context);
+  const shift = (lines - 1) * DATA_CONTEXT_LINE_PT;
+  const band = { ...DATA_BODY, y: DATA_BODY.y + shift, h: DATA_BODY.h - shift };
   return [
     headline(slide, row.left),
     ...row.placed,
-    ...(slide.context === undefined ? [] : [text(fitText(DATA_CONTEXT, slide.context, DATA_CONTEXT_MIN_PT, 'context line'), slide.context)]),
-    text(fitText(DATA_CONCLUSION, conclusion, DATA_CONCLUSION_MIN_PT, 'conclusion'), conclusion),
-    ...evidence(slide),
+    ...(slide.context === undefined ? [] : [text({ ...DATA_CONTEXT, h: lines * DATA_CONTEXT_LINE_PT }, slide.context)]),
+    text(fitText({ ...DATA_CONCLUSION, y: DATA_CONCLUSION.y + shift }, conclusion, DATA_CONCLUSION_MIN_PT, 'conclusion'), conclusion),
+    ...evidence(slide, band),
     ...(slide.source === undefined ? [] : [text(fitText(DATA_SOURCE, slide.source, 16, 'source line'), slide.source)]),
   ];
 };
