@@ -5,7 +5,8 @@ import { dummyStringsIn } from './theme/dummy.js';
 /*
  * `whitedeck validate` beyond parsing: the editorial rules of the skill's section
  * "HEADLINE = WHAT WE LOOK AT, CONCLUSION BELOW IT", checked on data slides.
- * - headline: says WHAT is shown, never the finding -> warning on a finding verb or a %
+ * - headline: says WHAT is shown or asks the question, never the finding -> warning on a finding verb (outside a
+ *   question) or a %
  * - conclusion: every % with its absolute numbers -> error on a % without an absolute
  * - ranges written out with units ("13 % to 16 %") -> error on "13-16 %" / "13 - 16 %"
  * A data slide without a conclusion line never gets here: the parser rejects it.
@@ -22,10 +23,14 @@ const PERCENT_TOKEN = /[-+]?\d+(?:[.,]\d+)?\s*(?:%|pp\b)/g;
 const ABSOLUTE = /\d{1,3}(?:,\d{3})+|\d{3,}|\d+(?:\.\d+)?\s?(?:k|K|M|bn)\b/;
 const COMPACT_RANGE = /\d+(?:[.,]\d+)?\s*-\s*\d+(?:[.,]\d+)?\s*%/;
 
+/* A question headline asks, it does not state the finding ("Did clicks fall more than normal swings, 2025?"):
+   finding verbs count only after its last "?" (the period / scope part). */
+const statedPart = (title: string): string => title.slice(title.lastIndexOf('?') + 1);
+
 const headlineWarnings = (slide: DeckSlide, where: string): string[] => {
   const title = inlineVisibleText(slide.title ?? '');
   const warnings: string[] = [];
-  const verb = FINDING_VERB.exec(title);
+  const verb = FINDING_VERB.exec(statedPart(title));
   if (verb !== null) warnings.push(`${where}: headline has the finding verb "${verb[0]}" - say what is shown, put the finding in Conclusion:`);
   if (title.includes('%')) warnings.push(`${where}: headline has a % - the number belongs in Conclusion:`);
   return warnings;

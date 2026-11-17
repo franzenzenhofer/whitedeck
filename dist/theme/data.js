@@ -36,15 +36,19 @@ export const DATA_PILL = {
 export const DATA_LOGO = {
     wordmarkH: 42, stackedH: 64, stackedAspect: 3, iconH: 46, labelSizePt: 24, labelGap: 10, labelColor: CAPTION_GREY, glyphEm: 0.56,
 };
+/** Context line: 30pt and never shrunk (Franz, 13 + 17 Nov 2026: "far too small"); one line, about 115 characters. */
 export const DATA_CONTEXT = {
-    x: MARGIN_PT, y: 140, w: CONTENT_W, h: 36, sizePt: 24, font: 'light', color: CAPTION_GREY, align: 'left', vAlign: 'middle',
+    x: MARGIN_PT, y: 140, w: CONTENT_W, h: 46, sizePt: 30, font: 'light', color: CAPTION_GREY, align: 'left', vAlign: 'middle',
 };
+export const DATA_CONTEXT_MIN_PT = 30;
+/* Conclusion and evidence sit 10pt lower than with the old 24pt / 36pt-high context box; the evidence band
+   still ends at 988pt, above the source line. */
 export const DATA_CONCLUSION = {
-    x: MARGIN_PT, y: 184, w: CONTENT_W, h: 86, sizePt: 34, font: 'regular', color: TEXT_GREY, align: 'left', vAlign: 'top',
+    x: MARGIN_PT, y: 194, w: CONTENT_W, h: 86, sizePt: 34, font: 'regular', color: TEXT_GREY, align: 'left', vAlign: 'top',
 };
 export const DATA_CONCLUSION_MIN_PT = 24;
 /** Evidence band: images, table, or bullets. */
-export const DATA_BODY = { x: MARGIN_PT, y: 288, w: CONTENT_W, h: 700 };
+export const DATA_BODY = { x: MARGIN_PT, y: 298, w: CONTENT_W, h: 690 };
 export const DATA_IMAGE_GAP = 36;
 export const DATA_TABLE = {
     sizePt: 24, minPt: 16, rowEm: 1.9, padPt: 10, gapAbove: 24,

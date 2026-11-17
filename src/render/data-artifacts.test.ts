@@ -140,6 +140,39 @@ describe('data layout tables: P5, both sides of the threshold', () => {
   });
 });
 
+/* Franz, 13 Nov 2026 + 17 Nov 2026: the context line under the headline is never small - 30pt or larger
+   in every format, never shrunk; a context that does not fit one 30pt line is a build error. */
+describe('data layout context line: 30pt, never shrunk', () => {
+  const contextDeck = (context: string) =>
+    parseDeck(['# GSC: clicks a day, 2026', `Context: ${context}`, 'Conclusion: YES: 4,619 clicks a day (-39.5 %) below the prediction'].join('\n'));
+
+  it('paints the context as a 30pt text run in the pptx', async () => {
+    for (const { slide, n } of dataSlides()) {
+      if (slide.context === undefined) continue;
+      const shape = [...(await slideXml(n)).matchAll(/<p:sp>[\s\S]*?<\/p:sp>/g)].find((m) => m[0].includes(`<a:t>${slide.context}</a:t>`));
+      const sizes = [...(shape?.[0] ?? '').matchAll(/ sz="(\d+)"/g)].map((s) => Number(s[1]));
+      expect(sizes.length, `slide ${n}: context run has no size`).toBeGreaterThan(0);
+      for (const sz of sizes) expect(sz).toBeGreaterThanOrEqual(3000);
+    }
+  });
+
+  it('places a 115-character context at 30pt, with the conclusion below it', () => {
+    const slide = contextDeck('x'.repeat(115)).slides[0];
+    if (slide === undefined) throw new Error('no slide');
+    const texts = placeCustomSlide(slide, {}).flatMap((p) => (p.kind === 'text' ? [p] : []));
+    const context = texts.find((p) => p.text === 'x'.repeat(115));
+    const conclusion = texts.find((p) => p.text.startsWith('YES:'));
+    expect(context?.box.sizePt).toBe(30);
+    expect((conclusion?.box.y ?? 0) >= (context?.box.y ?? 0) + (context?.box.h ?? 0)).toBe(true);
+  });
+
+  it('fails a context too long for one 30pt line instead of shrinking it', () => {
+    const slide = contextDeck('x'.repeat(200)).slides[0];
+    if (slide === undefined) throw new Error('no slide');
+    expect(() => placeCustomSlide(slide, {})).toThrow(/context line .* does not fit/);
+  });
+});
+
 describe('data layout HTML: the same geometry as the pptx', () => {
   it('paints pills and the table at the placed pixel positions', () => {
     const md = toMarpMarkdown(deck);

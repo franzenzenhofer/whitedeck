@@ -33,7 +33,9 @@ export declare const DATA_LOGO: {
     readonly labelColor: "#5e5e5e";
     readonly glyphEm: 0.56;
 };
+/** Context line: 30pt and never shrunk (Franz, 13 + 17 Nov 2026: "far too small"); one line, about 115 characters. */
 export declare const DATA_CONTEXT: PtText;
+export declare const DATA_CONTEXT_MIN_PT = 30;
 export declare const DATA_CONCLUSION: PtText;
 export declare const DATA_CONCLUSION_MIN_PT = 24;
 /** Evidence band: images, table, or bullets. */

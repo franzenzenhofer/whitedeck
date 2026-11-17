@@ -197,8 +197,11 @@ Source: [Search Console, Performance report](https://search.google.com/search-co
 Built-in logos: `ga4` `gsc` `search` `discover` `news` `ai-overviews` `ai-mode` `ads` `psi`
 (provenance and licences in `assets/logos/SOURCE.md`), or any image path with an optional
 `"Label"`. Signed change cells in tables colour themselves (red down, green up, grey below 1 %).
-`Notes:` works on every layout. `whitedeck validate` warns on a finding verb or a %
-in a data headline and fails a conclusion with a % but no absolute number. Full example:
+`Notes:` works on every layout. The context line is 30pt and never shrinks (one line of about
+115 characters; longer fails the build). `whitedeck validate` warns on a finding verb or a %
+in a data headline and fails a conclusion with a % but no absolute number. A question headline
+("Did clicks fall more than normal swings, 2025?") is fine: finding verbs count only after its
+last `?`. The conclusion may lead with the answer word, coloured: `**[YES]{#188038}**: ...`. Full example:
 `examples/data-demo.md`.
 
 ## CLI

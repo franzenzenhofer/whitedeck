@@ -1,5 +1,5 @@
 import { inlineVisibleText } from '../parse/inline.js';
-import { DATA_BODY, DATA_BULLETS, DATA_CLUSTER, DATA_CONCLUSION, DATA_CONCLUSION_MIN_PT, DATA_CONTEXT, DATA_HEADLINE, DATA_HEADLINE_GLYPH_EM, DATA_HEADLINE_MIN_PT, DATA_HEADLINE_ONE_LINE_MIN_PT, DATA_HEADLINE_MIN_W, DATA_IMAGE_GAP, DATA_LOGO, DATA_PILL, DATA_SOURCE, DATA_TABLE, } from '../theme/data.js';
+import { DATA_BODY, DATA_BULLETS, DATA_CLUSTER, DATA_CONCLUSION, DATA_CONCLUSION_MIN_PT, DATA_CONTEXT, DATA_CONTEXT_MIN_PT, DATA_HEADLINE, DATA_HEADLINE_GLYPH_EM, DATA_HEADLINE_MIN_PT, DATA_HEADLINE_ONE_LINE_MIN_PT, DATA_HEADLINE_MIN_W, DATA_IMAGE_GAP, DATA_LOGO, DATA_PILL, DATA_SOURCE, DATA_TABLE, } from '../theme/data.js';
 import { BLACK } from '../theme/scope.js';
 import { fittedTableSizePt, placeTable, tableHeightPt } from './data-table.js';
 import { fittedNotesSizePt, fittedSizePt, notesHeightPt, textHeightPt } from './fit.js';
@@ -148,7 +148,7 @@ export const placeDataSlide = (slide) => {
     return [
         headline(slide, row.left),
         ...row.placed,
-        ...(slide.context === undefined ? [] : [text(fitText(DATA_CONTEXT, slide.context, 18, 'context line'), slide.context)]),
+        ...(slide.context === undefined ? [] : [text(fitText(DATA_CONTEXT, slide.context, DATA_CONTEXT_MIN_PT, 'context line'), slide.context)]),
         text(fitText(DATA_CONCLUSION, conclusion, DATA_CONCLUSION_MIN_PT, 'conclusion'), conclusion),
         ...evidence(slide),
         ...(slide.source === undefined ? [] : [text(fitText(DATA_SOURCE, slide.source, 16, 'source line'), slide.source)]),

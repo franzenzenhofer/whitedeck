@@ -7,6 +7,7 @@ import {
   DATA_CONCLUSION,
   DATA_CONCLUSION_MIN_PT,
   DATA_CONTEXT,
+  DATA_CONTEXT_MIN_PT,
   DATA_HEADLINE,
   DATA_HEADLINE_GLYPH_EM,
   DATA_HEADLINE_MIN_PT,
@@ -178,7 +179,7 @@ export const placeDataSlide = (slide: DeckSlide): Placed[] => {
   return [
     headline(slide, row.left),
     ...row.placed,
-    ...(slide.context === undefined ? [] : [text(fitText(DATA_CONTEXT, slide.context, 18, 'context line'), slide.context)]),
+    ...(slide.context === undefined ? [] : [text(fitText(DATA_CONTEXT, slide.context, DATA_CONTEXT_MIN_PT, 'context line'), slide.context)]),
     text(fitText(DATA_CONCLUSION, conclusion, DATA_CONCLUSION_MIN_PT, 'conclusion'), conclusion),
     ...evidence(slide),
     ...(slide.source === undefined ? [] : [text(fitText(DATA_SOURCE, slide.source, 16, 'source line'), slide.source)]),

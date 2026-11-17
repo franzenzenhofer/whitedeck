@@ -5,10 +5,13 @@ const PERCENT_TOKEN = /[-+]?\d+(?:[.,]\d+)?\s*(?:%|pp\b)/g;
 /* An absolute: a number with thousands separators, 3+ digits, or a k / M / bn suffix. */
 const ABSOLUTE = /\d{1,3}(?:,\d{3})+|\d{3,}|\d+(?:\.\d+)?\s?(?:k|K|M|bn)\b/;
 const COMPACT_RANGE = /\d+(?:[.,]\d+)?\s*-\s*\d+(?:[.,]\d+)?\s*%/;
+/* A question headline asks, it does not state the finding ("Did clicks fall more than normal swings, 2025?"):
+   finding verbs count only after its last "?" (the period / scope part). */
+const statedPart = (title) => title.slice(title.lastIndexOf('?') + 1);
 const headlineWarnings = (slide, where) => {
     const title = inlineVisibleText(slide.title ?? '');
     const warnings = [];
-    const verb = FINDING_VERB.exec(title);
+    const verb = FINDING_VERB.exec(statedPart(title));
     if (verb !== null)
         warnings.push(`${where}: headline has the finding verb "${verb[0]}" - say what is shown, put the finding in Conclusion:`);
     if (title.includes('%'))

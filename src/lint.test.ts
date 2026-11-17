@@ -18,6 +18,18 @@ describe('validate: the headline / conclusion rules on data slides', () => {
     ]);
   });
 
+  it('accepts a question headline and a conclusion that leads with the answer word', () => {
+    const question = 'Did Google Search clicks fall more than normal swings, 14 Aug - 7 Dec 2025?';
+    expect(lint(question, 'YES, negative: 8,444 clicks a day (-44.6 %) below the prediction')).toEqual({ errors: [], warnings: [] });
+    expect(lint(question, '**[NO]{#c5221f}**: 1,204 of 5,880 clicks a day inside normal swings').errors).toEqual([]);
+  });
+
+  it('still warns on a finding verb in a statement headline next to a question', () => {
+    expect(lint('Clicks fell after the release? No: they fell before it', '8,600 -> 6,300 a day').warnings).toEqual([
+      expect.stringMatching(/finding verb "fell"/),
+    ]);
+  });
+
   it('errors on a % without absolutes', () => {
     expect(lint('GA4: sessions', 'Organic share fell by 2 %').errors).toEqual([
       expect.stringMatching(/^slide 1: conclusion has a % without its absolute numbers/),

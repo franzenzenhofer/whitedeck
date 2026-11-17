@@ -206,11 +206,11 @@ A slide with any of `Tags:` / `Logos:` / `Context:` / `Conclusion:` or a table b
 
 | element | markdown | in .key / .pptx |
 |---|---|---|
-| headline (what is shown) | `# ...` | text box, 56pt, shrinks on one line to 40pt, then 2 lines |
+| headline (what is shown, or the question) | `# ...` | text box, 56pt, shrinks on one line to 40pt, then 2 lines |
 | tags (time window, YoY) | `Tags: 28 days \| YoY` | rounded shape + text (Keynote: a group, double-click edits the text), right of the headline |
 | source logos | `Logos: gsc \| search \| path/x.png "Label"` | picture + label as text box (icons) |
-| context line (optional) | `Context: ...` | small grey text box under the headline row |
-| conclusion (required) | `Conclusion: ...` | text box under the context line |
+| context line (optional) | `Context: ...` | grey text box under the headline row, 30pt, never shrunk: one line of about 115 characters, longer is a build error |
+| conclusion (required) | `Conclusion: ...`, may lead with the answer word: `Conclusion: **[YES]{#188038}**: 4,619 clicks a day (-39.5 %) below the prediction` | text box under the context line |
 | evidence | 1-3 `![](chart.png)` side by side, a `\| table \|`, images over a table, OR max 5 bullets | pictures / native table / text |
 | source line | `Source: [..](url)` | text box at the bottom, the chart links to its first URL |
 | presenter notes | `Notes: ...` (any layout) | Keynote presenter notes |
