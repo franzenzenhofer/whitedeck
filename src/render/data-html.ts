@@ -18,9 +18,13 @@ export const pillHtml = (p: PlacedPill): string => {
 
 const cellHtml = (tag: 'th' | 'td', value: string, p: PlacedTable, at: { col: number; rowH: number }): string => {
   const { col, rowH } = at;
+  /* Number cells never wrap; a number header may wrap at a space only when data-table.ts sized it so; no cell ever
+     breaks inside a word. */
+  const wrap = tag === 'td' && (p.align[col] ?? 'left') !== 'left' ? 'nowrap' : 'normal';
   const style =
     `width:${ptToPx(p.colW[col] ?? 0)}px;height:${ptToPx(rowH)}px;padding:0 ${p.padRightPt}pt 0 ${p.padLeftPt}pt;` +
-    `text-align:${p.align[col] ?? 'left'};border:${p.borderPt}pt solid ${p.border};white-space:normal;box-sizing:border-box;` +
+    `text-align:${p.align[col] ?? 'left'};border:${p.borderPt}pt solid ${p.border};white-space:${wrap};` +
+    'overflow-wrap:normal;word-break:keep-all;hyphens:none;box-sizing:border-box;' +
     (tag === 'th' ? `background:${p.headerFill};font-weight:700;` : 'font-weight:400;');
   return `<${tag} style="${style}">${inlineToHtml(value)}</${tag}>`;
 };

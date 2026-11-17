@@ -5,7 +5,8 @@ import JSZip from 'jszip';
 import { describe, expect, it } from 'vitest';
 import { parseDeck } from '../parse/deck.js';
 import { DATA_TABLE } from '../theme/data.js';
-import { renderPptx } from './pptx.js';
+import { tableHtml } from './data-html.js';
+import { cellMarginsToIndents, renderPptx } from './pptx.js';
 import { placeCustomSlide } from './scope-layout.js';
 import type { PlacedTable } from './placed.js';
 
@@ -53,9 +54,86 @@ describe('data tables: wrapped cells, colours, widths (W11 T2 - T4)', () => {
     expect(t.colW[2]).toBeGreaterThanOrEqual(need('+10.4 %') - 0.01);
   });
 
-  it('keeps table text at 24pt or more and pads every cell 24pt on the left', () => {
+  it('keeps table text at 24pt or more and pads every cell 24pt on the right (the indent Keynote keeps)', () => {
     expect(tableOf(TASK).sizePt).toBeGreaterThanOrEqual(24);
-    expect(DATA_TABLE.padLeftPt).toBeGreaterThanOrEqual(24);
+    expect(DATA_TABLE.padRightPt).toBeGreaterThanOrEqual(24);
+    expect(DATA_TABLE.padLeftPt).toBeGreaterThan(0);
+  });
+});
+
+/* Red Bull fix round 2 (17 Nov 2026): "11,188 NO", "7,089 17,381", "13,029-315", "94,660 fail:" ran together in
+   Keynote, and narrow headers split mid-word ("scor / e", "scop / e"). */
+describe('data tables: neighbour padding and unsplit header words (fix round 2)', () => {
+  const NUMBERS = ['', '| page type | clicks | prev | % | answer | score |', '| --- | ---: | ---: | ---: | --- | ---: |',
+    '| article | 11,188 | 13,029 | -315 | NO | 42 |', '| list | 7,089 | 17,381 | +94,660 | YES, negative | 90 |'];
+  const flat = (s: string, bold = false) => s.length * 24 * DATA_TABLE.glyphEm * (bold ? DATA_TABLE.boldEm : 1);
+
+  it('keeps at least 24pt between the texts of neighbouring columns, in either alignment', () => {
+    expect(DATA_TABLE.padLeftPt + DATA_TABLE.padRightPt).toBeGreaterThanOrEqual(DATA_TABLE.minGapPt);
+    expect(DATA_TABLE.minGapPt).toBeGreaterThanOrEqual(24);
+    expect(DATA_TABLE.padRightPt).toBeGreaterThan(0);
+    const t = tableOf(NUMBERS);
+    const pad = DATA_TABLE.padLeftPt + DATA_TABLE.padRightPt;
+    /* every number column holds its widest cell (bold header included) plus both paddings */
+    expect(t.colW[1]).toBeGreaterThanOrEqual(flat('11,188') + pad - 0.01);
+    expect(t.colW[2]).toBeGreaterThanOrEqual(flat('17,381') + pad - 0.01);
+    expect(t.colW[3]).toBeGreaterThanOrEqual(flat('+94,660') + pad - 0.01);
+    expect(t.colW[5]).toBeGreaterThanOrEqual(flat('score', true) + pad - 0.01);
+    expect(t.padLeftPt).toBe(DATA_TABLE.padLeftPt);
+    expect(t.padRightPt).toBe(DATA_TABLE.padRightPt);
+  });
+
+  it('counts a percent sign and capitals at their real width, not the average glyph', () => {
+    const t = tableOf(['', '| segment | % |', '| --- | ---: |', '| all | %%%%%% |']);
+    expect(t.colW[1]).toBeGreaterThan(flat('%%%%%%') + DATA_TABLE.padLeftPt + DATA_TABLE.padRightPt + 30);
+  });
+
+  it('never splits a header word: a narrow column is at least as wide as its longest bold header word', () => {
+    const t = tableOf(['', '| task | scope | score |', '| --- | --- | ---: |', `| ${LONG} | all | 42 |`]);
+    const pad = DATA_TABLE.padLeftPt + DATA_TABLE.padRightPt;
+    expect(t.colW[1]).toBeGreaterThanOrEqual(flat('scope', true) + pad - 0.01);
+    expect(t.colW[2]).toBeGreaterThanOrEqual(flat('score', true) + pad - 0.01);
+    expect(t.rowHs[0]).toBeCloseTo(t.sizePt * DATA_TABLE.rowEm);
+  });
+
+  it('wraps a long number header at a space (never inside a word) only when the whole header does not fit', () => {
+    const head = ['| label |', ...Array.from({ length: 7 }, (_, i) => ` actual against predicted ${i} |`)].join('');
+    const t = tableOf(['', head, `| --- |${' ---: |'.repeat(7)}`, `| a |${' 1,234 |'.repeat(7)}`]);
+    const pad = DATA_TABLE.padLeftPt + DATA_TABLE.padRightPt;
+    for (const w of t.colW.slice(1)) expect(w).toBeGreaterThanOrEqual(flat('predicted', true) + pad - 0.01);
+    expect(t.rowHs[0]).toBeGreaterThan(t.sizePt * DATA_TABLE.rowEm);
+  });
+
+  it('writes the padding as paragraph indents in the pptx (Keynote ignores cell margins), cell margins 0', async () => {
+    const out = join(mkdtempSync(join(tmpdir(), 'whitedeck-pad-')), 't.pptx');
+    await renderPptx(deckOf(NUMBERS), out);
+    const xml = (await (await JSZip.loadAsync(readFileSync(out))).file('ppt/slides/slide1.xml')?.async('string')) ?? '';
+    const emu = (pt: number) => String(Math.round(pt * 12700));
+    const cells = [...xml.matchAll(/<a:tc>[\s\S]*?<\/a:tc>/g)].map((m) => m[0]);
+    expect(cells).toHaveLength(18);
+    for (const c of cells) {
+      expect(c).toContain(`marL="${emu(DATA_TABLE.padLeftPt)}" marR="${emu(DATA_TABLE.padRightPt)}"`);
+      expect(c).toMatch(/<a:tcPr marL="0" marR="0"/);
+      expect((c.match(/<a:pPr\b/g) ?? []).length).toBe((c.match(/<a:p>/g) ?? []).length);
+    }
+  });
+
+  it('moves margins of a multi-paragraph cell onto every paragraph and leaves cells without margins alone', () => {
+    const cell = '<a:tc><a:txBody><a:p><a:pPr algn="r" indent="0" marL="0"><a:buNone/></a:pPr></a:p><a:p></a:p></a:txBody><a:tcPr marL="304800" marR="203200" marT="0" marB="0"/></a:tc>';
+    const out = cellMarginsToIndents(cell);
+    expect(out.match(/marL="304800" marR="203200"/g)).toHaveLength(2);
+    expect(out).not.toContain('indent=');
+    expect(out).toContain('<a:pPr algn="r" marL="304800"');
+    expect(out).toContain('<a:tcPr marL="0" marR="0" marT="0" marB="0"/>');
+    const bare = '<a:tc><a:txBody><a:p></a:p></a:txBody><a:tcPr/></a:tc>';
+    expect(cellMarginsToIndents(bare)).toBe(bare);
+  });
+
+  it('never wraps a number cell in the HTML / PDF path and never breaks a word', () => {
+    const html = tableHtml(tableOf(NUMBERS));
+    expect(html).toContain('word-break:keep-all');
+    expect(html).toMatch(/<td style="[^"]*text-align:right;[^"]*white-space:nowrap;/);
+    expect(html).toMatch(/<td style="[^"]*text-align:left;[^"]*white-space:normal;/);
   });
 
   it('writes one pptx table row per markdown row, with the grown row height', async () => {

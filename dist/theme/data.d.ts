@@ -50,10 +50,12 @@ export declare const DATA_TABLE: {
     readonly minPt: 24;
     readonly rowEm: 1.9;
     readonly lineEm: 1.15;
-    readonly padLeftPt: 24;
-    readonly padRightPt: 12;
+    readonly padLeftPt: 12;
+    readonly padRightPt: 24;
+    readonly minGapPt: 24;
     readonly gapAbove: 24;
     readonly glyphEm: 0.54;
+    readonly boldEm: 1.08;
     readonly headerFill: "#f2f2f2";
     readonly border: "#c8c8c8";
     readonly borderPt: 1;

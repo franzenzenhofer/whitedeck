@@ -64,9 +64,14 @@ export const DATA_BODY: PtRect = { x: MARGIN_PT, y: 294, w: CONTENT_W, h: 694 };
 export const DATA_IMAGE_GAP = 36;
 
 /* Tables: 24pt floor (the pptx floor of the decks), cells wrap inside their row (the row grows), number columns never
-   wrap, 24pt left padding (no "1,373 msYES" collisions after a right-aligned column), IS red / SHOULD green. */
+   wrap, IS red / SHOULD green. Every cell is padded 12pt left and 24pt right (pptx: paragraph indents, see pptx.ts),
+   so the texts of two neighbouring columns are at least 36pt apart in PowerPoint / PDF (36pt) and at least 24pt in Keynote,
+   which keeps only the right indent (Red Bull fix round 2, 17 Nov 2026: "11,188 NO", "7,089 17,381" ran together).
+   Widths are estimated with glyphEm or the per-glyph Helvetica Neue widths, whichever is wider; bold text (header,
+   answer words) is boldEm wider; a header WORD never splits (scope, score). */
 export const DATA_TABLE = {
-  sizePt: 24, minPt: 24, rowEm: 1.9, lineEm: 1.15, padLeftPt: 24, padRightPt: 12, gapAbove: 24, glyphEm: 0.54,
+  sizePt: 24, minPt: 24, rowEm: 1.9, lineEm: 1.15, padLeftPt: 12, padRightPt: 24, minGapPt: 24, gapAbove: 24, glyphEm: 0.54,
+  boldEm: 1.08,
   headerFill: '#f2f2f2', border: '#c8c8c8', borderPt: 1, color: BLACK, is: '#c5221f', should: '#188038',
 } as const;
 

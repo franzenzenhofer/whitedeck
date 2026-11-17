@@ -150,17 +150,42 @@ const addSlideContent = (target, slide, meta) => {
    Escape bare ampersands in every Target attribute after pptxgenjs is done.
    `&amp;` is the correct encoding of `&`, so the URL is unchanged. */
 const BARE_AMP = /&(?!(?:amp|lt|gt|quot|apos|#\d+|#x[0-9a-fA-F]+);)/g;
-const escapeRelationshipTargets = async (pptxPath) => {
+const escapeTargets = (xml) => xml.replace(/Target="([^"]*)"/g, (whole, url) => {
+    const escaped = url.replace(BARE_AMP, '&amp;');
+    return escaped === url ? whole : `Target="${escaped}"`;
+});
+/* Table cell padding as PARAGRAPH indents (Red Bull fix round 2, 17 Nov 2026). Keynote's pptx import ignores a cell's
+   own margins (<a:tcPr marL marR>): every cell's text sat on the cell border, so a right-aligned number ran into the
+   next column's text ("11,188 NO", "-44.6 %YES"). Measured on the probe deck in Keynote (17 Nov 2026): a paragraph's
+   RIGHT indent (pPr marR) survives the import, its left indent (pPr marL) does not. PowerPoint and LibreOffice keep
+   both. So the margins pptxgenjs wrote on the cell move onto every paragraph of that cell, the cell's own left / right
+   margin becomes 0 (no double padding in PowerPoint), and DATA_TABLE.padRightPt (24pt) alone keeps the texts of two
+   neighbouring columns 24pt apart in Keynote. */
+const ATTR = (name) => new RegExp(`\\s${name}="[^"]*"`, 'g');
+export const cellMarginsToIndents = (xml) => xml.replace(/<a:tc(?:\s[^>]*)?>[\s\S]*?<\/a:tc>/g, (cell) => {
+    const tcPr = /<a:tcPr\b[^>]*?\smarL="(\d+)"[^>]*?\smarR="(\d+)"/.exec(cell);
+    if (tcPr === null)
+        return cell;
+    const [, marL = '0', marR = '0'] = tcPr;
+    return cell
+        .replace(/<a:pPr\b([^>]*?)(\/?)>/g, (_whole, attrs, close) => {
+        const kept = attrs.replace(ATTR('marL'), '').replace(ATTR('marR'), '').replace(ATTR('indent'), '');
+        return `<a:pPr${kept} marL="${marL}" marR="${marR}"${close}>`;
+    })
+        .replace(/<a:p>(?!<a:pPr)/g, `<a:p><a:pPr marL="${marL}" marR="${marR}"/>`)
+        .replace(/(<a:tcPr\b[^>]*?\s)marL="\d+"/, '$1marL="0"')
+        .replace(/(<a:tcPr\b[^>]*?\s)marR="\d+"/, '$1marR="0"');
+});
+const postProcess = async (pptxPath) => {
     const zip = new AdmZip(pptxPath);
     let changed = false;
     for (const entry of zip.getEntries()) {
-        if (!entry.entryName.endsWith('.rels'))
+        const isRels = entry.entryName.endsWith('.rels');
+        const isSlide = /^ppt\/slides\/slide\d+\.xml$/.test(entry.entryName);
+        if (!isRels && !isSlide)
             continue;
         const xml = entry.getData().toString('utf8');
-        const fixed = xml.replace(/Target="([^"]*)"/g, (whole, url) => {
-            const escaped = url.replace(BARE_AMP, '&amp;');
-            return escaped === url ? whole : `Target="${escaped}"`;
-        });
+        const fixed = isRels ? escapeTargets(xml) : cellMarginsToIndents(xml);
         if (fixed !== xml) {
             zip.updateFile(entry.entryName, Buffer.from(fixed, 'utf8'));
             changed = true;
@@ -189,5 +214,5 @@ export const renderPptx = async (deck, outPath) => {
             target.addNotes(slide.notes);
     }
     await pptx.writeFile({ fileName: outPath });
-    await escapeRelationshipTargets(outPath);
+    await postProcess(outPath);
 };
