@@ -70,7 +70,7 @@ export const DATA_IMAGE_GAP = 36;
    Widths are estimated with glyphEm or the per-glyph Helvetica Neue widths, whichever is wider; bold text (header,
    answer words) is boldEm wider; a header WORD never splits (scope, score). */
 export const DATA_TABLE = {
-  sizePt: 24, minPt: 24, rowEm: 1.9, lineEm: 1.15, padLeftPt: 12, padRightPt: 24, minGapPt: 24, gapAbove: 24, glyphEm: 0.54,
+  sizePt: 32, minPt: 24, rowEm: 1.9, lineEm: 1.15, padLeftPt: 12, padRightPt: 24, minGapPt: 24, gapAbove: 24, glyphEm: 0.54,
   boldEm: 1.08,
   headerFill: '#f2f2f2', border: '#c8c8c8', borderPt: 1, color: BLACK, is: '#c5221f', should: '#188038',
 } as const;

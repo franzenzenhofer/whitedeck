@@ -15,7 +15,8 @@ import type { PlacedTable } from './placed.js';
  * - Text columns share the rest in proportion to their longest cell and WRAP INSIDE THE CELL: the row grows, it never
  *   splits into extra rows. Wrapping is estimated with a wide glyph (DATA_TABLE.glyphEm) so Keynote never needs more
  *   lines than the row has.
- * - The text shrinks (2pt steps) only down to DATA_TABLE.minPt (24pt); a table that does not fit then fails the build
+ * - The text starts at DATA_TABLE.sizePt (32pt, W11 lead review 18 Nov 2026: a short table fills its band) and shrinks
+ *   (2pt steps) only down to DATA_TABLE.minPt (24pt); a table that does not fit then fails the build
  *   naming the reason, never a table that runs off the slide.
  */
 const visible = (table: DeckTable): string[][] =>
