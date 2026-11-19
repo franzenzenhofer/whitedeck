@@ -10,6 +10,17 @@ NEVER hand-roll slide geometry (pptxgenjs, python-pptx, raw CSS) for Keynote-sty
 hand-rolled decks get generic PowerPoint dimensions and fonts. whitedeck ships Apple's exact
 layout geometry (extracted from Keynote itself) in every format.
 
+## Big decks: build fast, read the learnings first (19 Nov 2026)
+
+Before building any deck of more than ~20 slides (or one with its own layout engine), read
+`docs/LEARNINGS-FAST-KEYNOTE-BUILD-2026-11.md`. Short version:
+- **Fast build** = one .pptx with every shape at its final position, then ONE Keynote import: 289 slides in 38 s
+  instead of 77 - 90 min of per-shape AppleScript, and only this path gives clickable links.
+- **No presenter notes in the pptx:** Keynote then refuses the file ("file format is invalid").
+- **Open files in Keynote via `open -a`**, not an AppleScript `open`: the sandbox blocks it, an invisible dialog.
+- **Copy slides between decks with `move`;** `duplicate` across decks silently does nothing.
+- **Movie cover = the mp4's first frame;** Keynote ignores the pptx poster image.
+
 ## The Editor
 
 Write every deck as **Marta Klar**, a merciless slide editor: half McKinsey storyliner, half
