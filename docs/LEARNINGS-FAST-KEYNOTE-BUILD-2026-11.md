@@ -65,7 +65,42 @@ How it works (`dummy-deck/pptx_build.py`, `fast-build.applescript`, `build-v10.s
 - Show, do not reference: a to-do that says "check the 20-type checklist" must list the 20 types on the slide.
 - Version every output (`-v10`, `-rc2`, timestamped folders); never overwrite a delivered file.
 
-## 4. One command
+## 4. Learning from Franz's hand edits (19 Nov 2026): build decks the way he finishes them
+
+Method (repeat it after every manual edit session):
+1. Record the session (screen + mic + system audio, one command: openrouter-transcribe `record-start.sh`).
+2. Export his deck from a COPY to PDF; dump BOTH decks shape by shape with AppleScript (class, x, y, w, h, text,
+   size, font, colour, table cells, files): `analysis-franz-edit/dump.applescript` + `convert.py`.
+3. Page diff (`dummy-deck/diff_pages.py`: align pages by title / text, visual score 1 - mean abs grey diff at 40 dpi)
+   + HTML report (`diff_report.py`); Gemini ("Argos") on the video for the WHEN / WHAT (`video-edits.md`); Codex
+   gpt-6.2-sol on before/after contact sheets for the WHY and the rules (`LEARNINGS-FRANZ-HAND-EDITS-2026-11-CODEX.md`).
+4. Teach the build (`dummy-deck/build_franz.py` + `build-franz.sh`, one command, 76 s): his order and hidden slides;
+   per generated slide his geometry / text / size / colour item by item (Keynote item i == pptx shape i, verified);
+   slides he wrote or pasted come from a copy of his deck by `move`.
+
+Result: his deck 320 slides (15 hidden, 305 visible). Baseline (our build vs his): 213 of 305 pages identical, 51 edited,
+41 inserted, 9 deleted, mean visual similarity of matched pages 0.9919. Rebuild with the learned edits: **305 of 305 pages
+matched, 285 identical, mean 0.9989, worst page 0.9699**; his file untouched (sha256 eb6de042... before and after).
+
+What he does, as rules for the FIRST build (details, page evidence and the why: the Codex file):
+- **Decision brief first:** after title + offer, Management Summary (trend chart + diagnosis + causes) and Potential
+  (growth estimate with a caveat footnote, a real example such as the video) BEFORE the table of contents. The
+  conclusion moves forward; the end carries concrete to-dos with targets.
+- **Size evidence for the room:** pies >= 55 % (target 60 - 65 %) of the body height with a >= 28 pt legend; landscape
+  screenshots 55 - 65 % of the width, tall ones >= 70 % of the body height; phone captures ~ 21 % of the width each.
+- **Text-only slides use the canvas:** 36 - 44 pt for short findings and method slides, >= 32 pt body text,
+  1.15 - 1.30 line spacing; put the formula / method first, the client's value next ("4.7 days = GOOD" in green).
+- **Every chart / table gets one plain-language reading** under it (period, denominator, benchmark when it changes the
+  reading); bold the verdict; red only for measured misses.
+- **Merge duplicates:** same metric + period + chart = one slide that keeps every distinct finding; a generic benchmark
+  slide goes next to (or into) the client's calculation. He HIDES (skips) slides instead of deleting them.
+- **Imported material stays native and complete:** paste whole source chapters (32-slide MUI module) instead of
+  recreating them as sparse text; flag any import where a source visual disappears.
+- **Average-position charts always carry the caveat** that losing poorly ranked results improves the average.
+- Leave to him: the weight of each cause in the diagnosis, forecasts (20 - 30 %), tone of verdicts, which chapters the
+  audience needs.
+
+## 5. One command
 
 `bash dummy-deck/build-v10.sh <out-dir>`: gates -> pptx (3 s) -> Keynote import + PDF (~20 s) -> native SEO-test slides
 moved in (16 s) -> md with the same page numbers. Keynote runs on whatever Mac has it (this Mac or Arthur).

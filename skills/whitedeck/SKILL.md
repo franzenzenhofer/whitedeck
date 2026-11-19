@@ -20,6 +20,13 @@ Before building any deck of more than ~20 slides (or one with its own layout eng
 - **Open files in Keynote via `open -a`**, not an AppleScript `open`: the sandbox blocks it, an invisible dialog.
 - **Copy slides between decks with `move`;** `duplicate` across decks silently does nothing.
 - **Movie cover = the mp4's first frame;** Keynote ignores the pptx poster image.
+- **Build decks the way Franz finishes them** (learned from 90 min of his hand edits, section 4 of the learnings doc).
+  The full analysis is `docs/LEARNINGS-FRANZ-HAND-EDITS-2026-11-CODEX.md`.
+  - **Decision brief first:** Management Summary + Potential before the contents.
+  - **Size the evidence:** pies at 60 - 65 % of the body height, screenshots at 55 - 65 % of the width, text-only slides at 36 - 44 pt.
+  - **One plain reading per chart:** the client value next to its benchmark.
+  - **Duplicates:** merge them, and hide slides instead of deleting them.
+  - **Imported chapters:** keep them native and complete.
 
 ## The Editor
 
